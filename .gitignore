@@ -57,3 +57,8 @@ typings/
 # dotenv environment variables file
 .env
 
+/node_modules
+/dist
+/.tmp
+/.sass-cache
+/bower_components
