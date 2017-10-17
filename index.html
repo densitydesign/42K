@@ -1,5 +1,5 @@
 <!DOCTYPE html>
- <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <style>
 body {
     background-color: black;
@@ -7,7 +7,10 @@ body {
     padding: 0;
 }
 
-svg {}
+svg {
+/*    width: 1024px;
+    height: 768px;*/
+}
 
 .node {
     stroke: none;
@@ -18,51 +21,37 @@ svg {}
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
 var width = window.innerWidth,
-    chartWidth = width,
     height = window.innerHeight,
     svg = d3.select("svg").attr('width', width).attr('height', height),
-    nodeRadius = 1.5;
+    nodeRadius = 1;
 
 var nodes = [];
 
-function addNodes(n, max) {
+function addNodes(n) {
     for (var i = 0; i < n; i++) {
-        if (nodes.length < max) {
-            // var myX = width / 4 + Math.random() * width / 2;
-            // var myY = height / 4 + Math.random() * height / 2;
-
-            var myX = Math.random() * width;
-            var myY = Math.random() * height;
-
-            // var myX = 25 + (width - 50) * Math.random();
-            // var myY = 25 + (height - 50) * Math.random();
-
-            nodes.push({ 'id': i, 'r': nodeRadius, 'x': myX, 'y': myY });
-        }
+        var myX = Math.random() * width;
+        var myY = Math.random() * height;
+        nodes.push({ 'id': i, 'r': nodeRadius, 'x': myX, 'y': myY });
     }
 }
 
 function removeNodes(n) {
-    for (var i = nodes.length; i > nodes.length-n; i++) {
+    for (var i = nodes.length; i > nodes.length - n; i++) {
         if (nodes.length > 0) {
-            var randomIndex = Math.floor( nodes.length * Math.random )
-            nodes.splice(randomIndex,1)
+            var randomIndex = Math.floor(nodes.length * Math.random)
+            nodes.splice(randomIndex, 1)
         }
     }
 }
 
-addNodes(42000, 42000);
+addNodes(42000);
 
 
 
 var simulation = d3.forceSimulation(nodes)
-    .force("center", d3.forceCenter(width / 2, height / 2))
-    // .force("y", d3.forceY(width/2))
-    // .force("x", d3.forceX(height/2))
-    .force("collide", d3.forceCollide(function(d) { return d.r + 2 }).strength(2))
-    // .force("charge", d3.forceManyBody().strength(1))
+    .force("collide", d3.forceCollide(function(d) { return d.r + 1 }).strength(3))
     .alpha(1)
-    .alphaDecay(0.00)
+    .alphaDecay(0.01)
     .on("tick", ticked)
 
 
@@ -106,28 +95,7 @@ function ticked() {
     // Bounded force layout (https://bl.ocks.org/mbostock/1129492)
     // Math.max( nodeRadius, Math.min(width - nodeRadius, d.x) )
     // the function above is useful for returning nodes positions within the svg and not outside of it.
-    node.attr("cx", function(d) { return d.x = Math.max( nodeRadius, Math.min(width - nodeRadius, d.x) ); })
-        .attr("cy", function(d) { return d.y = Math.max( nodeRadius, Math.min(height - nodeRadius, d.y) ); })
+    node.attr("cx", function(d) { return d.x = Math.max(nodeRadius, Math.min(width - nodeRadius, d.x)); })
+        .attr("cy", function(d) { return d.y = Math.max(nodeRadius, Math.min(height - nodeRadius, d.y)); })
 }
-
-
-
-// d3.timeout(function() {
-
-//     update();
-// }, 1000);
-
-// d3.interval(function() {
-//     nodes.pop(); // Remove c.
-//     links.pop(); // Remove c-a.
-//     links.pop(); // Remove b-c.
-//     update();
-// }, 2000, d3.now());
-
-// d3.interval(function() {
-//     nodes.push(c); // Re-add c.
-//     links.push({ source: b, target: c }); // Re-add b-c.
-//     links.push({ source: c, target: a }); // Re-add c-a.
-//     update();
-// }, 2000, d3.now() + 1000);
 </script>
