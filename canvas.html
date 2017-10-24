@@ -12,18 +12,34 @@ svg {
     height: 768px;*/
 }
 
+canvas {
+    /*background-color: red;*/
+}
+
 .node {
     stroke: none;
     fill: white;
 }
 </style>
-<svg></svg>
+<!-- <svg></svg> -->
+<canvas></canvas>
 <script src="https://d3js.org/d3.v4.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/hidpi-canvas@1.0.10/dist/hidpi-canvas.min.js"></script> -->
 <script>
 var width = window.innerWidth,
     height = window.innerHeight,
     svg = d3.select("svg").attr('width', width).attr('height', height),
+    canvas = document.querySelector("canvas"),
+    context = canvas.getContext("2d"),
     nodeRadius = 1;
+
+d3.select(canvas)
+    .attr('width', width*2)
+    .style('width', width + 'px')
+    .attr('height', height*2)
+    .style('height', height + 'px')
+
+context.scale(2,2);
 
 var nodes = [];
 
@@ -31,9 +47,6 @@ function addNodes(n) {
     for (var i = 0; i < n; i++) {
         var myX = Math.random() * width;
         var myY = Math.random() * height;
-
-        var myX2 = Math.random() * width;
-        var myY2 = Math.random() * height;
 
         var random = Math.random();
 
@@ -58,7 +71,7 @@ function removeNodes(n) {
     }
 }
 
-addNodes(45000/4)
+addNodes(45000)
 
 nodes.forEach(function(d) {
     var myX = Math.random() * width;
@@ -71,25 +84,28 @@ nodes.forEach(function(d) {
 var forceX = d3.forceX(function(d) {
     if (d.role == 'studente') {
         return width / 4;
+        // return 400
     } else {
-        return width / 4 * 3;
+        // return width / 4 * 3;
+        return width - 150;
     }
-});
+}).strength(0.05);
 
-var forceY = d3.forceY(height / 2);
+var forceY = d3.forceY(height / 2).strength(0.05);
 
-var charge = d3.forceManyBody().strength(-0.5);
+var charge = d3.forceManyBody().strength(-0.25);
 
-var collide = d3.forceCollide(function(d) { return d.r + 0.5 })
+var collide = d3.forceCollide(function(d) { return d.r + 1 })
 
 var simulation = d3.forceSimulation(nodes)
+    // .force('center', d3.forceCenter(width/2, height/2))
     .force("collide", null)
     .force('x', null)
     .force('y', null)
     .force('charge', null)
     .alpha(1)
-    .alphaMin(0.4)
-    .alphaDecay(0.01)
+    // .alphaMin(0.4)
+    .alphaDecay(0.000)
     .on("tick", ticked)
 
 
@@ -126,16 +142,29 @@ function update() {
 }
 
 function ticked() {
-    // console.log(simulation.alpha())
-    // ordinary tick function for force layout
-    // node.attr("cx", function(d) { return d.x; })
-    //     .attr("cy", function(d) { return d.y; })
+    context.clearRect(0, 0, width, height);
+    context.save();
+    // context.translate(width / 2, height / 2 + 40);
 
-    // Bounded force layout (https://bl.ocks.org/mbostock/1129492)
-    // Math.max( nodeRadius, Math.min(width - nodeRadius, d.x) )
-    // the function above is useful for returning nodes positions within the svg and not outside of it.
-    node.attr("cx", function(d) { return d.x = Math.max(nodeRadius, Math.min(width - nodeRadius, d.x)); })
-        .attr("cy", function(d) { return d.y = Math.max(nodeRadius, Math.min(height - nodeRadius, d.y)); })
+    // context.beginPath();
+    // graph.links.forEach(drawLink);
+    // context.strokeStyle = "#aaa";
+    // context.stroke();
+
+    context.beginPath();
+    nodes.forEach(drawNode);
+    context.fillStyle = '#fff';
+    context.fill();
+    // context.strokeStyle = "#fff";
+    // context.stroke();
+
+    context.restore();
+    // console.log('tick')
+}
+
+function drawNode(d) {
+    context.moveTo(d.x + d.r, d.y);
+    context.arc(d.x, d.y, d.r, 0, 2 * Math.PI);
 }
 
 
@@ -150,12 +179,13 @@ function ticked() {
 
 d3.timeout(function() {
     console.log('split');
-    update();
 
     simulation
         .force("x", forceX)
         .force('y', forceY)
         .force('charge', charge)
-        .force('collide', null)
-}, 5000, d3.now());
+        // .force('collide', collide);
+
+    update();
+}, 1000, d3.now());
 </script>
