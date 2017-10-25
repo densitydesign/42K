@@ -1,31 +1,12 @@
 <!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<style>
-body {
-    background-color: black;
-    margin: 0;
-    padding: 0;
-}
-
-svg {
-    /*    width: 1024px;
-    height: 768px;*/
-}
-
-canvas {
-    /*background-color: red;*/
-}
-
-.node {
-    stroke: none;
-    fill: white;
-}
-</style>
-<!-- <svg></svg> -->
+<link rel="stylesheet" type="text/css" href="style.css">
 <canvas></canvas>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <!-- <script src="https://cdn.jsdelivr.net/npm/hidpi-canvas@1.0.10/dist/hidpi-canvas.min.js"></script> -->
 <script>
+//spazio per interfaccia a lato SX 850px, circa il 22%
+
 var width = window.innerWidth,
     height = window.innerHeight,
     svg = d3.select("svg").attr('width', width).attr('height', height),
@@ -34,12 +15,12 @@ var width = window.innerWidth,
     nodeRadius = 1;
 
 d3.select(canvas)
-    .attr('width', width*2)
+    .attr('width', width * 2)
     .style('width', width + 'px')
-    .attr('height', height*2)
+    .attr('height', height * 2)
     .style('height', height + 'px')
 
-context.scale(2,2);
+context.scale(2, 2);
 
 var nodes = [];
 
@@ -55,7 +36,7 @@ function addNodes(n) {
         if (random > 0.07) {
             role = 'studente';
         } else {
-            role = 'prof';
+            role = 'professore';
         }
 
         nodes.push({ 'id': i, 'r': nodeRadius, 'x': myX, 'y': myY, 'role': role });
@@ -71,29 +52,24 @@ function removeNodes(n) {
     }
 }
 
-addNodes(45000)
+//addNodes(3750);
 
-nodes.forEach(function(d) {
-    var myX = Math.random() * width;
-    var myY = Math.random() * height;
-
-    d.x = myX;
-    d.y = myY;
-})
-
-var forceX = d3.forceX(function(d) {
-    if (d.role == 'studente') {
-        return width / 4;
-        // return 400
-    } else {
-        // return width / 4 * 3;
-        return width - 150;
+d3.tsv('./assets/dati-studenti-professori.tsv', function(err, data) {
+    if (err) {
+        throw err;
     }
-}).strength(0.05);
+    // console.log(data);
 
-var forceY = d3.forceY(height / 2).strength(0.05);
-
-var charge = d3.forceManyBody().strength(-0.25);
+    data.forEach(function(d){
+        var myX = width*0.22 + width*0.78 *Math.random();
+        var myY = Math.random() * height;
+        d.x=myX;
+        d.y=myY;
+        d.r=1;
+    })
+    console.log(data);
+    nodes=data;
+})
 
 var collide = d3.forceCollide(function(d) { return d.r + 1 })
 
@@ -104,9 +80,85 @@ var simulation = d3.forceSimulation(nodes)
     .force('y', null)
     .force('charge', null)
     .alpha(1)
-    // .alphaMin(0.4)
-    .alphaDecay(0.000)
-    .on("tick", ticked)
+    .alphaMin(0.2)
+    .alphaDecay(0.01)
+    .on("tick", function(){
+        ticked(nodes)
+    })
+    // .on("tick", null)
+    .on("end", function() {
+        console.log('calc done');
+    })
+
+d3.select('body').append('div')
+    .attr('class', 'ui-box')
+    .append('p')
+    .attr('id', 'force-restart')
+    .html('restart simulation')
+    .on('click', function() {
+        simulation.alpha(1).restart();
+    })
+
+function tipologie(theSimulation) {
+    console.log('nodi separati per studenti, professori');
+    var forceX = d3.forceX(function(d) {
+        if (d['Tipo'] == 'studente') {
+            return width * 0.22 + 450;
+        } else {
+            return width - 135-200;
+        }
+    }).strength(0.05);
+
+    var forceY = d3.forceY(height / 2).strength(0.05);
+
+    var charge = d3.forceManyBody().strength(-0.25);
+
+    theSimulation
+        .force("collide", null)
+        .force('x', forceX)
+        .force('y', forceY)
+        .force('charge', charge)
+        .on("tick", function(){
+            ticked(nodes);
+        })
+
+    update(nodes);
+}
+d3.select('.ui-box')
+    .append('p')
+    .html('separati per tipologia')
+    .on('click', function() {
+        tipologie(simulation);
+    })
+
+function soloStudenti(theSimulation) {
+    console.log('solo studenti al centro');
+
+    var forceX = d3.forceX(width * 0.22 + (width * 0.78) / 2).strength(0.05);
+    var forceY = d3.forceY(height / 2).strength(0.05);
+    var charge = d3.forceManyBody().strength(-0.25);
+
+    var thisData = nodes.filter(function(d) {
+        return d['Tipo'] == 'studente'
+    })
+
+    theSimulation
+        .force("collide", null)
+        .force('x', forceX)
+        .force('y', forceY)
+        .force('charge', charge)
+        .on("tick", function(){
+            ticked(thisData);
+        })    
+
+    update(thisData);
+}
+d3.select('.ui-box')
+    .append('p')
+    .html('solo studenti al centro')
+    .on('click', function() {
+        soloStudenti(simulation);
+    })
 
 
 var g = svg.append("g"),
@@ -114,34 +166,34 @@ var g = svg.append("g"),
 
 // update();
 
-function update() {
+function update(dataNodes) {
     var beginTime = d3.now();
 
     function drawGraph() {
         // Apply the general update pattern to the nodes.
-        node = node.data(nodes, function(d) { return d.id; });
+        node = node.data(dataNodes, function(d) { return d['ID']; });
+        
         node.exit().remove();
-        node = node.enter().append("circle")
-            .attr('class', 'node')
-            .merge(node)
-            .attr("r", function(d) { return d.r; })
-            .attr('cx', function(d) { return d.x; })
-            .attr('cy', function(d) { return d.y; })
-    }
 
-    drawGraph();
+        node = node.enter().merge(node)
+        // .append("circle")
+        // .attr('class', 'node')
+        
+        // .attr("r", function(d) { return d.r; })
+        // .attr('cx', function(d) { return d.x; })
+        // .attr('cy', function(d) { return d.y; })
+    }
+    // drawGraph();
 
     // Update and restart the simulation.
-    simulation.nodes(nodes);
+    simulation.nodes(dataNodes);
     simulation.alpha(1).restart();
-    simulation.on("end", function() {
-        console.log('calc done', d3.now() - beginTime);
-        // console.log(JSON.stringify(nodes, null, 2));
-
-    })
+    // simulation.on("end", function() {
+    //     console.log('calc done', d3.now() - beginTime);
+    // })
 }
 
-function ticked() {
+function ticked(nodes) {
     context.clearRect(0, 0, width, height);
     context.save();
     // context.translate(width / 2, height / 2 + 40);
@@ -169,23 +221,18 @@ function drawNode(d) {
 
 
 // d3.timeout(function() {
-//     console.log('collide');
+//     tipologie(simulation);
+// }, 500, d3.now());
+
+// d3.timeout(function() {
+//     console.log('split');
 
 //     simulation
-//         .force("collide", collide)
+//         .force("x", forceX)
+//         .force('y', forceY)
+//         .force('charge', charge)
+//         // .force('collide', collide);
+
 //     update();
-
 // }, 1000, d3.now());
-
-d3.timeout(function() {
-    console.log('split');
-
-    simulation
-        .force("x", forceX)
-        .force('y', forceY)
-        .force('charge', charge)
-        // .force('collide', collide);
-
-    update();
-}, 1000, d3.now());
 </script>
