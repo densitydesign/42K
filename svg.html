@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" type="text/css" href="style.css">
+<svg></svg>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+var width = window.innerWidth,
+    height = window.innerHeight,
+    svg = d3.select("svg").attr('width', width).attr('height', height),
+    nodeRadius = 1;
+
+var nodes = [];
+
+function addNodes(n) {
+    for (var i = 0; i < n; i++) {
+        var myX = Math.random() * width;
+        var myY = Math.random() * height;
+
+        var myX2 = Math.random() * width;
+        var myY2 = Math.random() * height;
+
+        var random = Math.random();
+
+        var role;
+
+        if (random > 0.07) {
+            role = 'studente';
+        } else {
+            role = 'prof';
+        }
+
+        nodes.push({ 'id': i, 'r': nodeRadius, 'x': myX, 'y': myY, 'role': role });
+    }
+}
+
+function removeNodes(n) {
+    for (var i = nodes.length; i > nodes.length - n; i++) {
+        if (nodes.length > 0) {
+            var randomIndex = Math.floor(nodes.length * Math.random)
+            nodes.splice(randomIndex, 1)
+        }
+    }
+}
+
+addNodes(45000/4)
+
+nodes.forEach(function(d) {
+    var myX = Math.random() * width;
+    var myY = Math.random() * height;
+
+    d.x = myX;
+    d.y = myY;
+})
+
+var forceX = d3.forceX(function(d) {
+    if (d.role == 'studente') {
+        return width / 4;
+    } else {
+        return width / 4 * 3;
+    }
+});
+
+var forceY = d3.forceY(height / 2);
+
+var charge = d3.forceManyBody().strength(-0.5);
+
+var collide = d3.forceCollide(function(d) { return d.r + 0.5 })
+
+var simulation = d3.forceSimulation(nodes)
+    .force("collide", null)
+    .force('x', null)
+    .force('y', null)
+    .force('charge', null)
+    .alpha(1)
+    .alphaMin(0.4)
+    .alphaDecay(0.01)
+    .on("tick", ticked)
+
+
+var g = svg.append("g"),
+    node = svg.selectAll(".node");
+
+// update();
+
+function update() {
+    var beginTime = d3.now();
+
+    function drawGraph() {
+        // Apply the general update pattern to the nodes.
+        node = node.data(nodes, function(d) { return d.id; });
+        node.exit().remove();
+        node = node.enter().append("circle")
+            .attr('class', 'node')
+            .merge(node)
+            .attr("r", function(d) { return d.r; })
+            .attr('cx', function(d) { return d.x; })
+            .attr('cy', function(d) { return d.y; })
+    }
+
+    drawGraph();
+
+    // Update and restart the simulation.
+    simulation.nodes(nodes);
+    simulation.alpha(1).restart();
+    simulation.on("end", function() {
+        console.log('calc done', d3.now() - beginTime);
+        // console.log(JSON.stringify(nodes, null, 2));
+
+    })
+}
+
+function ticked() {
+    // console.log(simulation.alpha())
+    // ordinary tick function for force layout
+    // node.attr("cx", function(d) { return d.x; })
+    //     .attr("cy", function(d) { return d.y; })
+
+    // Bounded force layout (https://bl.ocks.org/mbostock/1129492)
+    // Math.max( nodeRadius, Math.min(width - nodeRadius, d.x) )
+    // the function above is useful for returning nodes positions within the svg and not outside of it.
+    node.attr("cx", function(d) { return d.x = Math.max(nodeRadius, Math.min(width - nodeRadius, d.x)); })
+        .attr("cy", function(d) { return d.y = Math.max(nodeRadius, Math.min(height - nodeRadius, d.y)); })
+}
+
+
+// d3.timeout(function() {
+//     console.log('collide');
+
+//     simulation
+//         .force("collide", collide)
+//     update();
+
+// }, 1000, d3.now());
+
+d3.timeout(function() {
+    console.log('split');
+    update();
+
+    simulation
+        .force("x", forceX)
+        .force('y', forceY)
+        .force('charge', charge)
+        .force('collide', null)
+}, 5000, d3.now());
+</script>
