@@ -2,6 +2,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link rel="stylesheet" type="text/css" href="style.css">
 <canvas></canvas>
+<div class="ui-box"></div>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <!-- <script src="https://cdn.jsdelivr.net/npm/hidpi-canvas@1.0.10/dist/hidpi-canvas.min.js"></script> -->
 <script>
@@ -66,14 +67,25 @@ var simulation = d3.forceSimulation(nodes)
     console.log('calc done');
   })
 
-d3.select('body').append('div')
-  .attr('class', 'ui-box')
+d3.select('.ui-box')
   .append('p')
   .attr('id', 'force-restart')
   .html('restart simulation')
   .on('click', function() {
     simulation.alpha(1).restart();
   })
+
+d3.select('.ui-box')
+  .append('p')
+  .attr('id', 'force-stop')
+  .html('stop simulation')
+  .on('click', function() {
+    simulation.stop();
+  })
+
+d3.select('.ui-box')
+  .append('div')
+  .attr('id', 'alpha-meter')
 
 function tipologie(theSimulation) {
   console.log('nodi separati per studenti, professori');
@@ -107,9 +119,7 @@ d3.select('.ui-box')
     tipologie(simulation);
   })
 
-d3.select('.ui-box')
-  .append('div')
-  .attr('id', 'alpha-meter')
+
 
 function soloStudenti(theSimulation) {
   console.log('solo studenti al centro');
@@ -394,7 +404,7 @@ function ticked(nodes, cittadinanze) {
 
 
   if (cittadinanze) {
-    if (simulation.alpha() <= 0.9) {
+    if (simulation.alpha() <= 0.8) {
       context.font = "9px Open Sans";
       context.textAlign = "center";
       context.fillStyle = '#fff';
