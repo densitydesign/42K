@@ -31,6 +31,7 @@ d3.tsv('./assets/data/dati-studenti-professori.tsv', function(err, data) {
 
   data.forEach(function(d) {
     var myX = width * 0.22 + width * 0.78 * Math.random();
+    myX = width * Math.random();
     var myY = Math.random() * height;
     d.x = myX;
     d.y = myY;
@@ -39,16 +40,14 @@ d3.tsv('./assets/data/dati-studenti-professori.tsv', function(err, data) {
   console.log(data);
   nodes = data;
 
-  var tempData = [];
-  for (var i = 0; i < data.length; i += 10) {
-    tempData.push(data[i]);
-  }
-  nodes = tempData;
+  // var tempData = [];
+  // for (var i = 0; i < data.length; i += 5) {
+  //   tempData.push(data[i]);
+  // }
+  // nodes = tempData;
 
 
 })
-
-var collide = d3.forceCollide(function(d) { return d.r + 1 })
 
 var simulation = d3.forceSimulation(nodes)
   // .force('center', d3.forceCenter(width/2, height/2))
@@ -57,7 +56,7 @@ var simulation = d3.forceSimulation(nodes)
   .force('y', null)
   .force('charge', null)
   .alpha(1)
-  .alphaMin(0.1)
+  .alphaMin(0.3)
   .alphaDecay(0.01)
   .on("tick", function() {
     ticked(nodes)
@@ -107,6 +106,10 @@ d3.select('.ui-box')
   .on('click', function() {
     tipologie(simulation);
   })
+
+d3.select('.ui-box')
+  .append('div')
+  .attr('id','alpha-meter')
 
 function soloStudenti(theSimulation) {
   console.log('solo studenti al centro');
@@ -228,14 +231,31 @@ function cittadinanza(theSimulation) {
   entries = entries.sort(function(a,b){
     return b.value - a.value;
   })
-  console.log(entries.length)
 
+  // var topX = 19;
+
+  // entries = entries.slice(0,topX);
+
+  // thisData = thisData.filter(function(d){
+  //   var flag = false;
+  //   entries.forEach(function(e){
+  //       if(e.key == d['Cittadinanza']){
+  //           flag = true;
+  //       }
+  //   })
+  //   return flag
+  // })
+
+  // console.log(entries);
+
+  // positioning the citizenships according to their quantity
   var rowIndex = [0,0];
   var rowVertical;
   var rowHorizontal = 0;
+  var checkWidth = width*0.6;
   entries.forEach(function(d,i){
-    var r = Math.sqrt(d.value*12/Math.PI);
-    var margin = 30;
+    var r = Math.sqrt(d.value*9/Math.PI);
+    var margin = 10;
     d.r = r + margin;
     d.x = 0 + rowHorizontal;
     for (var j=0; j<i; j++){
@@ -243,23 +263,17 @@ function cittadinanza(theSimulation) {
       d.x += entries[j].r*2;
     }
     if (!rowVertical) {
-      rowVertical = d.r;
+      rowVertical = d.r + 20;
     }
     d.y = rowVertical;
-    d.x += r;
+    // d.x += r;
 
-    if(d.x > width*0.78){
+    if(d.x > checkWidth){
       rowIndex[0]++;
-      console.log('out', rowIndex, entries[i]);
-      rowVertical += rowVertical + d.r;
-      rowHorizontal -= d.x;
-      entries[i].x += rowHorizontal;
-      entries[i].y = rowVertical;
-    //   d.x += rowHorizontal + 15 + d.r;
-    //   d.y = rowVertical;
+      rowVertical += 140;
+      rowHorizontal -= checkWidth;
     }
     rowIndex[1]++;
-    // console.log(d);
   })
 
 
@@ -268,11 +282,12 @@ function cittadinanza(theSimulation) {
     var xposition = width;
     entries.forEach(function(c,i) {
       if (c.key == d['Cittadinanza']) {
-        xposition = width * 0.22 + c.x;   
+        xposition = width * 0.22 + c.x + 130;   
       }
     })
     return xposition;
-  }).strength(0.05);
+  })
+  forceX.strength(0.2);
 
 
   var forceY = d3.forceY(function(d){
@@ -283,16 +298,24 @@ function cittadinanza(theSimulation) {
       }
     })
     return yposition
-  }).strength(0.05);
-  var charge = d3.forceManyBody().strength(-0.2);
+  })
+  forceY.strength(0.2);
+
+
+  var charge = d3.forceManyBody()
+  charge.strength(-0.6);
+
+
+  var collide = d3.forceCollide(function(d) { return d.r + 2 }).strength(1)
+
 
   theSimulation
-    .force("collide", null)
     .force('x', forceX)
     .force('y', forceY)
+    // .force('collision',collide)
     .force('charge', charge)
     .on("tick", function() {
-      ticked(thisData);
+      ticked(thisData, entries);
     })
 
   update(thisData);
@@ -328,9 +351,9 @@ function update(dataNodes) {
     .restart();
 }
 
-function ticked(nodes) {
+function ticked(nodes, cittadinanze) {
   context.clearRect(0, 0, width, height);
-  // context.save();
+  context.save();
   // context.translate(width / 2, height / 2 + 40);
 
   // context.beginPath();
@@ -344,9 +367,37 @@ function ticked(nodes) {
   context.fill();
   // context.strokeStyle = "#fff";
   // context.stroke();
+  if(cittadinanze){
+    if(simulation.alpha() < .8) {
+        context.font = "6px Arial";
+        context.textAlign="center";
+        context.fillStyle = '#fff';
+        cittadinanze.forEach(function(ccc) {
+            var thesePoints = nodes.filter(function(n){
+                return n['Cittadinanza'] == ccc.key;
+            })
+            thesePoints = thesePoints.map(function(d){
+                return [d.x,d.y]
+            })
+            // console.log(thesePoints)
+            if (thesePoints.length > 2) {
+                var thisHull = d3.polygonHull(thesePoints);
+                var thisCentroid = d3.polygonCentroid(thisHull);
+                // console.log(thisCentroid)
+                // context.fillText(ccc.key, width*0.22 + ccc.x + 130, ccc.y-ccc.r);
+                context.fillText(ccc.key, thisCentroid[0], thisCentroid[1] + ccc.r + 12); 
+            } else {
+                // console.log(thesePoints[0][0])
+                context.fillText(ccc.key, thesePoints[0][0], thesePoints[0][1] + ccc.r + 12);
+            }          
+        }) 
+    } 
+  }
+  
 
-  // context.restore();
+  context.restore();
   // console.log('tick')
+  d3.select('#alpha-meter').style('width', 100*simulation.alpha()+'%')
 }
 
 function drawNode(d) {

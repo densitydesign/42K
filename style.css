@@ -33,10 +33,23 @@ body {
 	display: block;
 	top:0;
 	left: 0;
-	background-color: rgba(255,255,255,.1);
+	/*background-color: rgba(255,255,255,.1);*/
 	opacity: 1;
 	color: white;
-} 
+}
+.ui-box p {
+	padding-left: 10px;
+}
+
+#alpha-meter {
+	display: block;
+	width: 100%;
+	height: 10px;
+	position: absolute;
+	top: 0;
+	left: 0;
+	background-color: yellow;
+}
 
 canvas {
 }
