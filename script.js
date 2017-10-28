@@ -3,8 +3,8 @@
 var width = window.innerWidth,
   height = window.innerHeight,
   svg = d3.select("svg")
-  .attr('width', width)
-  .attr('height', height),
+	  .attr('width', width)
+	  .attr('height', height),
   canvas = document.querySelector("canvas"),
   context = canvas.getContext("2d"),
   nodeRadius = 1,
@@ -19,7 +19,6 @@ d3.select(canvas)
 context.scale(2, 2);
 
 var simulation = d3.forceSimulation(nodes)
-  // .force('center', d3.forceCenter(width/2, height/2))
   .force("collide", null)
   .force('x', null)
   .force('y', null)
@@ -29,9 +28,9 @@ var simulation = d3.forceSimulation(nodes)
   .alphaDecay(0.01)
   .on("tick", null)
   .on("tick", null)
-  .on("end", function() {
-    console.log('calc done');
-  })
+  // .on("end", function() {
+  //   console.log('calc done');
+  // })
 
 d3.select('.ui-box')
   .append('p')
@@ -77,18 +76,25 @@ function ticked(data, labels, clusters) {
         })
         if (thesePoints.length > 2) {
           var thisHull = d3.polygonHull(thesePoints);
+          var ty;
+          thisHull.forEach(function(point){
+          	if(!ty) {
+          		ty = point[1]
+          	}
+          	if (ty < point[1]) {
+          		ty=point[1]
+          	}
+          })
           var thisCentroid = d3.polygonCentroid(thisHull);
 
-          var tw = context.measureText(ccc.key)
-            .width + 4;
+          var tw = context.measureText(ccc.key).width + 4;
           var tx = thisCentroid[0];
-          var ty = thisCentroid[1] + ccc.r + 20;
+          ty += 20;
 
           context.fillStyle = "#fff";
           context.fillText(ccc.key, tx, ty);
         } else {
-          var tw = context.measureText(ccc.key)
-            .width + 4;
+          var tw = context.measureText(ccc.key).width + 4;
           var tx = thesePoints[0][0];
           var ty = thesePoints[0][1] + ccc.r + 15;
 
@@ -110,8 +116,6 @@ function drawNode(d) {
 }
 
 function layout(config) {
-
-  console.log(config)
 
   var data = config.data,
     type = config.layout,
@@ -190,6 +194,8 @@ function layout(config) {
         .alpha(1)
         .alphaDecay(0.01)
         .restart();
+      console.log('--- --- --- --- --- ---')
+
       break;
 
     case 'grid':
@@ -262,7 +268,7 @@ function layout(config) {
           .y
       })
 
-      console.log(data)
+      // console.log(data)
 
       var forceX = d3.forceX(function(d) {
         return d.cluster_x
@@ -333,7 +339,7 @@ d3.tsv('./assets/data/dati-studenti-professori.tsv', function(err, data) {
   //   tempData.push(data[i]);
   // }
   // nodes = tempData;
-  
+
   var configReset = {
     data: nodes,
     layout: null,
@@ -357,10 +363,10 @@ d3.tsv('./assets/data/dati-studenti-professori.tsv', function(err, data) {
   layoutOptions.text(function(d) { return d; })
     .attr("value", function(d) { return d; });
   dropDownLayout.on("change", function() {
-    console.log(d3.event.target.value)
+    // console.log(d3.event.target.value)
     config.layout = d3.event.target.value;
     config.size = d3.event.target.value == 'flock' ? sizeFlock : sizeGrid
-    console.log(config)
+    // console.log(config)
   });
 
   var dropDownClusters = d3.select('#select-cluster')
@@ -372,9 +378,9 @@ d3.tsv('./assets/data/dati-studenti-professori.tsv', function(err, data) {
   clusterOptions.text(function(d) { return d; })
     .attr("value", function(d) { return d; });
   dropDownClusters.on("change", function() {
-    console.log(d3.event.target.value)
+    // console.log(d3.event.target.value)
     config.clusters = d3.event.target.value;
-    console.log(config)
+    // console.log(config)
   });
 
   var dropDownFilter = d3.select('#select-filter')
@@ -386,9 +392,9 @@ d3.tsv('./assets/data/dati-studenti-professori.tsv', function(err, data) {
   filterOptions.text(function(d) { return d; })
     .attr("value", function(d) { return d; });
   dropDownFilter.on("change", function() {
-    console.log(d3.event.target.value)
+    // console.log(d3.event.target.value)
     config.filter.property = d3.event.target.value;
-    console.log(config)
+    // console.log(config)
 
     var values = d3.nest()
       .key(function(d) { return d[d3.event.target.value]; })
@@ -412,16 +418,16 @@ d3.tsv('./assets/data/dati-studenti-professori.tsv', function(err, data) {
   var dropDownFilterValue = d3.select('#value-filter')
     .attr("name", "value-filter")
     .on("change", function() {
-      console.log(d3.event.target.value)
+      // console.log(d3.event.target.value)
       config.filter.value = d3.event.target.value;
-      console.log(config)
+      // console.log(config)
     });
 
   d3.select("#filter-mode")
     .on("change", function() {
-      console.log(d3.event.target.checked)
+      // console.log(d3.event.target.checked)
       config.filter.equal = d3.event.target.checked;
-      console.log(config)
+      // console.log(config)
     });
 
   d3.select('input[name="updateButton"]')
