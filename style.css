@@ -29,16 +29,15 @@ body {
 .ui-box {
 	width: 22%;
 	height: 100%;
+	box-sizing: border-box;
+	padding: 50px 10px;
 	position: fixed;
 	display: block;
 	top:0;
 	left: 0;
-	background-color: rgba(255,255,255,.1);
+	/*background-color: rgba(255,255,255,.1);*/
 	opacity: 1;
 	color: white;
-}
-.ui-box p {
-	padding-left: 10px;
 }
 
 #alpha-meter {
