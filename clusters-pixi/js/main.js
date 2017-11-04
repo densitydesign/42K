@@ -294,6 +294,7 @@ function updateLayout(s) {
 			data: {
 				name: d.key
 			},
+			first: true,
 			y: height * .8,
 			x: i * w + w *.5
 		}
@@ -305,20 +306,33 @@ function updateLayout(s) {
 
 	function updateLabels(data) {
 
-		const selection = d3.selectAll("mylabel").data(data);
+		data = data.map(d=>({name:d.data.name, y:d.y, x:d.x, first:d.first}));
+
+
+		// TODO hm something is not working right
+		d3.selectAll("mylabel.p")
+		// .exit()
+		.remove()
+		.each(d=>stage.removeChild(d.cont))
+		
+		d3.selectAll("mylabel.p").each(d=>stage.removeChild(d.cont))
+
+		let selection = d3.selectAll("mylabel.p").data(data, d=>d.name);
+		
 		
 		selection
 		.enter()
 		.append("mylabel")
+		.attr("class","p")
 		.each((d,i)=>{
-			let text = new PIXI.Text(d.data.name.toUpperCase(),{fontFamily : 'Arial', fontSize: 12, fill : 0x2B0B69, align : 'center'});
+			let text = new PIXI.Text(d.name.toUpperCase(),{fontFamily : 'Arial', fontSize: 12, fill : 0x2B0B69, align : 'center'});
 			let cont = new PIXI.Sprite();
 			let g = new PIXI.Graphics();
 			const tw = text.width;
 			const th = text.height;
 			const pw = tw *.2;
 			const ph = th *.12;
-			g.beginFill(0xffffff, .8);
+			g.beginFill(d.first ? 0xff0000: 0xffffff, .8);
 			g.drawRect(-pw*.5,-ph*.5, tw+pw, th+ph);
 			g.endFill();
 			cont.position.x = d.x - tw * .5;
@@ -330,9 +344,7 @@ function updateLayout(s) {
 			TweenMax.from(cont, 1, {delay:i*.01+1, alpha:0})
 		});
 
-		selection
-		.exit()
-		.each(d=>stage.removeChild(d.cont))
+
 
 	}
 }
