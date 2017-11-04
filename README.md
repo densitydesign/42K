@@ -1,6 +1,6 @@
 ## Poliscope – Who we are
 
-##Usage
+## Usage
 Start a webserver inside the root folder. For example:
 
     python -m http.server
