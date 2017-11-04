@@ -317,11 +317,11 @@ function layout(config) {
 
 }
 
-d3.tsv('./assets/data/dati-studenti-professori.tsv', function(err, data) {
+d3.tsv('./assets/data/data.tsv', function(err, data) {
   if (err) {
     throw err;
   }
-
+  console.log(data)
   data.forEach(function(d) {
     var myX = width * 0.22 + width * 0.78 * Math.random();
     myX = width * Math.random();
@@ -334,11 +334,11 @@ d3.tsv('./assets/data/dati-studenti-professori.tsv', function(err, data) {
   nodes = data;
 
   // // filter the data so to have less things to display and improve performances
-  // var tempData = [];
-  // for (var i = 0; i < data.length; i += 10) {
-  //   tempData.push(data[i]);
-  // }
-  // nodes = tempData;
+  var tempData = [];
+  for (var i = 0; i < data.length; i += 10) {
+    tempData.push(data[i]);
+  }
+  nodes = tempData;
 
   var configReset = {
     data: nodes,
