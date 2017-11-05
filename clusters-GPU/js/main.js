@@ -122,6 +122,7 @@ function changeState(s){
 	if(state.type != s.type) {
 		updateNodes(s);
 		resetUI(s.type);
+		updateLayout(s);
 	} else if(state.dimensionA != s.dimensionA || state.dimensionB != s.dimensionB) {
 		updateLayout(s);
 		updateUI(s);
