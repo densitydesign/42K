@@ -1,0 +1,58 @@
+<html>
+
+<head>
+	<title>Poliscope – Who we are</title>
+	<style> 
+
+	html,body {width:100%; height:100%; padding:0; margin:0; font-family: sans-serif;color:white;background-image: radial-gradient(ellipse farthest-corner at 80% bottom, #602397 0%, #020146 80%, #134173 100%);}
+	#ui {position: absolute; transform:translate3d(0,0,0); z-index:1; padding: 1rem 1.5rem;}
+	button.disabled {opacity:.4;}
+</style>
+</head>
+
+<body>
+
+	<div id="ui">
+
+		<h3>who we are</h3>
+		<div id="type" class="toggle">
+			<button name="studente">students</button>
+			<button name="professore">teachers</button>
+		</div>
+		<p>organized by:</p>
+		<div id="dimensionsDrawers">
+			<select name="dimensionA" id="dimensionA">
+				<option value="">+</option>
+				<option value="Livello">Undergraduate / Graduate</option>
+				<option value="Scuola">Schools</option>
+				<option value="Cittadinanza">Nationality</option>
+			</select>
+			<span>and</span>
+			<select name="dimensionB" id="dimensionB">
+				<option value="">+</option>
+				<option value="Livello">Undergraduate / Graduate</option>
+				<option value="Scuola">Schools</option>
+				<option value="Cittadinanza">Nationality</option>
+			</select>
+		</div>
+		<div id="dimensionC" class="toggle">
+			<p>filtered by:</p>
+			<button class="disabled" name="gender">gender</button>
+			<button class="disabled" name="age">age</button>
+			<button class="disabled" name="evaluation">evaluation</button>
+		</div>
+
+
+	</div>
+
+
+	<script src="js/dat.gui.min.js"></script>
+	<script src="js/TweenMax.min.js"></script>
+	<script src="js/d3.v4.min.js"></script>
+	<script src="js/pixi.min.js"></script>
+	<script src="js/main.js"></script>
+
+
+</body>
+
+</html>
