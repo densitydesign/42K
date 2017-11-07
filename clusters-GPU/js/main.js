@@ -1,6 +1,6 @@
 /* jslint esversion:6, unused:true */
 window.settings = new function() {
-	this.wander = 1;
+	this.wander = 3.1;
 }();
 let gui;
 
@@ -140,25 +140,42 @@ function init() {
 		result
 		.forEach((d)=> d.Livello = d.Livello == "T" ? "Undegraduate" : "Graduate");
 
+		const screenRadius = Math.sqrt(width*width + height*height) / 2;
+
 		// add viz properties to data
 		state.result.forEach((d,i)=>{
+			let x = Math.random()*width;
+			let y = Math.random()*height;
+			let dx = x - width*.5;
+			let dy = y - height*.5;
+			let dir = Math.atan2(dy,dx);
+			let l = Math.sqrt(dx*dx + dy*dy) + screenRadius;
+			let nx = Math.cos(dir)*l + width*.5;
+			let ny = Math.sin(dir)*l + height*.5;
+			
+			// random initial position
+			d.sx = x;
+			d.sy = y;
+			// out of screen position
+			d.ox = nx;
+			d.oy = ny;
+
+			d.sprite = new PIXI.Sprite(texture);
+
 			d.index = i;
 			d.offset = Math.random();
 			d.randomWalk = 0;
-			d.tx = Math.random()* width;
-			d.ty = Math.random()* height;
-			d.sprite = new PIXI.Sprite(texture);
-			d.sprite.position.x = d.tx
-			d.sprite.position.y = d.ty
-			d.anchor = {x:.5, y:.5};
-			d.sprite.alpha = 0;
+
+			d.oAlpha =.6;
+			
+			
 			container.addChild(d.sprite);
 		});
 
 		// init UI
 		$typeToggle
 		.selectAll("button")
-		.on("click", function(d){
+		.on("click", function(){
 			changeDemographic(d3.select(this).attr("name"));
 		});
 		
@@ -223,19 +240,19 @@ function updateNodes(s) {
 	.append("studentparticle")
 	.attr("class","p")
 	.each((d)=>{
-		d.sprite.position.x = width*.5
-		d.sprite.position.y = height*.5
+		d.sprite.position.x = d.ox;
+		d.sprite.position.y = d.oy;
+		d.tx = d.sx;
+		d.ty = d.sy;
+		TweenMax.to(d.sprite, 2, {alpha:d.oAlpha});
 	});
 
-	
 	selection
 	.exit()
 	.each((d)=>{
 		// d.tweening = true;
-		TweenMax.to(d.sprite.position, 1, {x:width*.5});
-		TweenMax.to(d.sprite, 1, {alpha:0});
-		// d.sprite.alpha = 0;
-		// d.sprite.visible = false;
+		TweenMax.to(d.sprite.position, 2, {x:d.ox, y:d.oy});
+		TweenMax.to(d.sprite, 2, {alpha:0});
 	})
 	.remove();
 }
@@ -245,7 +262,6 @@ function updateNodes(s) {
 function updateLayout(s) {
 
 	if(s.clusters == null) {
-		s.data.forEach((d,i)=>{d.tx= Math.random()*width; d.ty=Math.random()*height});
 		updateLabels({})
 		return;
 	}
@@ -282,7 +298,7 @@ function updateLayout(s) {
 		let dataLabel = [];
 
 		p.forEach(d=>{
-			// add labels for parent cclusters
+			// add labels for parent clusters
 			d.first = true;
 			d.y += d.r;
 			dataLabel.push(d);
@@ -326,22 +342,21 @@ function updateLayout(s) {
 		return {
 			x: Math.cos(angle) * r + cx,
 			y: Math.sin(angle) * r + cy		
-		}
+		};
 	}
 
 
 
 	function updateLabels(data) {
 		
-		console.log(data);
 
-		// TODO hm something is not working right
+		// TODO hm something is not working right in the join so I remove everything here
 		d3.selectAll("mylabel.p")
 		// .exit()
 		.remove()
-		.each(d=>stage.removeChild(d.cont))
+		.each(d=>stage.removeChild(d.cont));
 
-		d3.selectAll("mylabel.p").each(d=>stage.removeChild(d.cont))
+		d3.selectAll("mylabel.p").each(d=>stage.removeChild(d.cont));
 
 		let selection = d3.selectAll("mylabel.p").data(data, d=>d.name);
 
@@ -383,7 +398,6 @@ function tick() {
 	time+=0.01;
 	renderer.render(stage);
 	state.data.forEach((d,i)=> {
-		// if(!d.sprite.visible) return;
 		let speed = d.offset * .2 + .1;
 		d.sprite.position.x += (d.tx-d.sprite.position.x)*speed;
 		d.sprite.position.y += (d.ty-d.sprite.position.y)*speed;
@@ -392,7 +406,7 @@ function tick() {
 		let r =  d.offset * 10 * d.randomWalk * window.settings.wander * 0.01;
 		d.sprite.position.x += Math.cos(a) * r;
 		d.sprite.position.y += Math.sin(a) * r;
-		d.sprite.alpha = (Math.sin(a * 10) * .5 + .5) * .6 + .2;
+		// d.sprite.alpha = (Math.sin(a * 10) * .5 + .5) * .6 + .2;
 
 	});
 	window.requestAnimationFrame(tick);
