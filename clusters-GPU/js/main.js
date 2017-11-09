@@ -584,7 +584,7 @@ function updateLayout(s) {
 
 	function updateAxis(data) {
 
-		// axisGraphics.clear();
+		axisGraphics.clear();
 		axisGraphics.lineStyle(1,0xffffff);
 
 		if(!data.length) return;
