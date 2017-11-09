@@ -186,7 +186,7 @@ function init() {
 		});
 
 		// init UI
-		d3.select("#ui").style("visibility", "visible");
+		setTimeout(()=>d3.select("#ui").style("visibility", "visible"), 1500);
 		
 		$typeToggle
 		.selectAll("button")
@@ -464,7 +464,7 @@ function updateLayout(s) {
 
 		const columnWidth = width *.1;
 		const graphWidth = (columnWidth * s.clusters.length);
-		console.log(width, graphWidth)
+
 
 		const xs = d3.scaleLinear().domain([0, s.clusters.length-1]).range([(width - graphWidth)*.5, (width + graphWidth) *.5 ]);
 		const ys = d3.scaleLinear().domain([0, s.clusters[0].values.length-1]).range([height*.25, height*.75]);
@@ -481,6 +481,7 @@ function updateLayout(s) {
 			let ix = xs(col);
 
 			first.values.sort((a,b)=> {
+				if(!b.values[1] || !b.values[0] || !a.values[1] || !a.values[0]) return a.values[0].value;
 				return (b.values[0].value + b.values[1].value) - (a.values[0].value + a.values[1].value);
 			});
 
