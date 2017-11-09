@@ -6,7 +6,7 @@ let gui;
 
 window.onload = function() {
 	gui = new dat.GUI();
-	gui.add(window.settings, 'wander', 0, 10);
+	gui.add(window.settings, 'wander', 0, 10).listen();
 	gui.close();
 };
 
@@ -30,6 +30,8 @@ let pack = d3.pack();
 // -- PIXI
 let container = new PIXI.Container();
 let stage = new PIXI.Container();
+let axisGraphics = new PIXI.Graphics();
+stage.addChild(axisGraphics);
 stage.addChild(container);
 
 let renderer = new PIXI.WebGLRenderer(width, height, {resolution:2, transparent:true});
@@ -43,7 +45,7 @@ let texture = PIXI.Texture.fromImage('assets/particle@2x.png');
 const $typeToggle = d3.select("#type");
 const $dimensionA = d3.select("#dimensionA");
 const $dimensionB = d3.select("#dimensionB");
-const $filterToggle = d3.select("#filter");
+const $dimensionC = d3.select("#dimensionC");
 
 // -- ACTIONS
 function changeDemographic(d) {
@@ -57,27 +59,48 @@ function changeDemographic(d) {
 	changeState(o);
 }
 
-function changeDimension(name, valueA, valueB) {
+function changeDimension(valueA, valueB, valueC) {
 	
 	let o = Object.assign({}, state);
 
-	if(valueA === "") {
+	if(valueA === "" && valueA !== undefined) {
 		o.clusters = null;
-		o[name] = null;
+		o.dimensionA = null;
+		o.dimensionB = null;
+		o.dimensionC = null;
 	} else {
 
-		if(valueB == undefined) {
-			o.clusters = organizeBy(o.data, valueA);
+		if(valueB === undefined) {
 			o.dimensionA = valueA;
 			o.dimensionB = null;
-		} else {
-			o.clusters = organizeBy(o.data, valueA, valueB);
+			o.clusters = d3.nest()
+			.key((d)=>d[valueA])
+			.rollup((d)=>d.length)
+			.entries(o.data);
+		} else if(valueB !== undefined && valueC === undefined) {
 			o.dimensionA = valueA;
 			o.dimensionB = valueB;
+			o.dimensionC = null;
+			o.clusters = d3.nest()
+			.key((d)=>d[valueA])
+			.key((d)=>d[valueB])
+			.rollup((d)=>d.length)
+			.entries(o.data);
+		} else if(valueB !== undefined && valueC !== undefined) {
+			o.dimensionA = valueA;
+			o.dimensionB = valueB;
+			o.dimensionC = valueC;
+			o.clusters = d3.nest()
+			.key((d)=>d[valueA])
+			.key((d)=>d[valueB])
+			.key((d)=>d[valueC])
+			.rollup((d)=>d.length)
+			.entries(o.data);
+		} else {
+			throw new Error("wrong number of dimensions");
 		}
 
 	}
-
 	changeState(o);
 }
 
@@ -87,24 +110,6 @@ function selectDemographic(d) {
 	return (a)=> a["Tipo"] === d;
 }
 
-function organizeBy(data, keyA, keyB) {
-	let clusters;
-
-	if(keyB === undefined) {
-		clusters = d3.nest()
-		.key((d)=>d[keyA])
-		.rollup((d)=>d.length)
-		.entries(data);
-	} else {
-		clusters = d3.nest()
-		.key((d)=>d[keyA])
-		.key((d)=>d[keyB])
-		.rollup((d)=>d.length)
-		.entries(data);
-	}
-
-	return clusters;
-}
 
 // -- ACCESSORS
 
@@ -123,7 +128,7 @@ function changeState(s){
 		updateNodes(s);
 		resetUI(s.type);
 		updateLayout(s);
-	} else if(state.dimensionA != s.dimensionA || state.dimensionB != s.dimensionB) {
+	} else if(state.dimensionA != s.dimensionA || state.dimensionB != s.dimensionB || state.dimensionC != s.dimensionC) {
 		updateLayout(s);
 		updateUI(s);
 	}
@@ -132,13 +137,16 @@ function changeState(s){
 
 
 function init() {
+
+	d3.select("#ui").style("visibility", "hidden");
+
 	loadData((result)=>{
 		state.result = result
 		.filter((d)=>d.Tipo !=="professore" || d.Tipo !=="studente")
 		.filter((d)=>d.ID!=="")
 
 		result
-		.forEach((d)=> d.Livello = d.Livello == "T" ? "Undegraduate" : "Graduate");
+		.forEach((d)=> d.Livello = d.Livello == "T" ? "Undergraduate" : "Graduate");
 
 		const screenRadius = Math.sqrt(width*width + height*height) / 2;
 
@@ -173,6 +181,8 @@ function init() {
 		});
 
 		// init UI
+		d3.select("#ui").style("visibility", "visible");
+		
 		$typeToggle
 		.selectAll("button")
 		.on("click", function(){
@@ -188,10 +198,25 @@ function init() {
 			const name = el.attr("name");
 			const value = el.node().selectedOptions[0].value;
 			if(name == "dimensionB") {
-				let a = $dimensionA.node().selectedOptions[0].value;
-				changeDimension(name, a, value)
+				changeDimension(state.dimensionA, value);
 			} else {
-				changeDimension(name, value)
+				changeDimension(value);
+			}
+
+		});
+
+		// toggle
+		$dimensionC
+		.selectAll("button")
+		.on("click", function(){
+			
+			const el = d3.select(this);
+			const isDisabled = el.classed("disabled");
+
+			if(!isDisabled) {
+				changeDimension(state.dimensionA, state.dimensionB);
+			} else {
+				changeDimension(state.dimensionA, state.dimensionB, el.attr("name"));
 			}
 
 		});
@@ -218,7 +243,7 @@ function resetUI(type) {
 
 	$dimensionA.node().selectedIndex = 0;
 	$dimensionB.node().selectedIndex = 0;
-	$filterToggle.style("display", "none");
+	$dimensionC.style("display", "none");
 }
 
 function updateUI(s) {
@@ -228,8 +253,16 @@ function updateUI(s) {
 	$dimensionA.node().selectedIndex = s.dimensionA ? optionsA.indexOf(s.dimensionA) : 0;
 	$dimensionB.node().selectedIndex = s.dimensionB ? optionsB.indexOf(s.dimensionB) : 0;
 
-	$filterToggle.style("display", s.dimensionA != null ? "block": "none");
+	let isSecondDimension = s.dimensionA !== null && s.dimensionB !== null;
 
+	$dimensionC.style("display", isSecondDimension ? "block": "none");
+	
+	if(isSecondDimension) {
+		$dimensionC.selectAll("button").each(function(){
+			const el = d3.select(this);
+			el.classed("disabled", el.attr("name") !== s.dimensionC);
+		});
+	}
 }
 
 function updateNodes(s) {
@@ -261,25 +294,27 @@ function updateNodes(s) {
 
 function updateLayout(s) {
 
-	if(s.clusters == null) {
-		updateLabels({})
-		return;
-	}
-
-	
-
 	let clustersInfo = [];
 	let c = 0;
 	let pIndex = 0;
 
+	// quick reset
+	s.data.forEach(d=>d.sprite.tint = 0xffffff);
+	updateAxis({});
+	
 
-	if(s.dimensionB === null) {
+	if(s.dimensionA !== null && s.dimensionB === null) {
+		window.settings.wander = 3.1;
+
 
 		pack = pack.size([width, height]).padding(height*0.1);
 		clustersInfo =  pack(getHierarchy(s.clusters)).children; 
+		
+		positionNodesInCircles();
 		updateLabels(clustersInfo);
 		
-	} else {
+	} else if(s.dimensionC === null && s.dimensionB !== null) {
+		window.settings.wander = 3.1;
 
 		pack = pack.size([width, height]).padding(height*0.05);
 
@@ -306,33 +341,190 @@ function updateLayout(s) {
 			clustersInfo = clustersInfo.concat(d.children);
 		});
 
-
+		positionNodesInCircles();
 		updateLabels(dataLabel);
 
+	} else if(s.dimensionC !== null) {
 
-		
-	}
+		window.settings.wander = 0.2;
 
-	// position nodes
-	s.data.forEach((d,i)=>{
-		const cl = clustersInfo[pIndex];
-		if(c > cl.value) {
-			pIndex++;
-			c = 0;
+		console.log(s.dimensionC)
+		switch(s.dimensionC) {
+			case "Genere":
+			butterflyChart();
+
+			break;
+			case "Anno di nascita":
+			histogram();
+			
+			break;
+			case "Valutazione":
+			// matrix (treemap packing?)
+
+			break;
 		}
 
-		let p = sampleCircle(cl.r, cl.x, cl.y)
-		d.tx = p.x;
-		d.ty = p.y;
 
-		c++;
-	});
 
+	} else {
+		updateLabels({});
+		return;
+	}
+
+	function histogram() {
+		window.settings.wander = 0.0;
+
+		let allClusters = [];
+		let years = [];
+		s.clusters.forEach(d=>d.values.forEach(d=>{
+			allClusters.push(d.key);
+			d.values.forEach(d=>{
+				years.push(d);
+			});
+		}));
+		
+		// years extent
+		let ae = d3.extent(years, (d)=>+d.key);
+		// max frequency 
+		let mf = d3.max(years, (d)=>+d.value);
+
+		
+		let xss = d3.scaleLinear().domain(ae).range([width*.25, width*.75]);
+		let yss = d3.scaleLinear().domain([0, allClusters.length-1]).range([height*.1, height*.9]);
+		let y2s = d3.scaleLinear().domain([0, mf]).range([0, (yss(1)-yss.range()[0])*.5]);
+
+
+		let row = 0;
+		let c = 0;
+
+		let labelsData = [];
+		s.clusters.forEach((first)=>{
+
+			labelsData.push({
+				data:{
+					key:first.key
+				},
+				y: yss(row),
+				x: width*0.9,
+				labelLeftAligned: true,
+				first: true
+			});
+
+			first.values.forEach((second)=> {
+				labelsData.push({
+					data:{
+						key:second.key
+					},
+					labelLeftAligned: true,
+					y:yss(row),
+					x: width*0.8
+				});
+				second.values.forEach((third)=> {
+
+					d3.range(third.value).forEach((d, i)=>{
+						s.data[c].tx = xss(+third.key) ;
+						s.data[c].ty = -y2s(i) + yss(row);
+						c++;
+					});
+				});
+				row++;
+
+			});
+		});
+
+		updateLabels(labelsData);
+	}
+
+
+	function matrix() {
+
+	}
+
+	function butterflyChart() {
+
+		// max value of all records
+		let mv = d3.max(s.clusters, (d)=>d3.max(d.values, (d)=>d3.max(d.values, (d)=>d.value)));
+		
+
+		const xs = d3.scaleLinear().domain([0, s.clusters.length-1]).range([width*.25, width*.75]);
+		const ys = d3.scaleLinear().domain([0, s.clusters[0].values.length-1]).range([height*.25, height*.75]);
+		// vertical layout
+		const columnWidth = (width*.5) / s.clusters.length;
+		let c = 0;
+		let labelsData = [];
+		let axisData = [];
+
+
+		s.clusters.forEach((first, col)=>{
+
+			let ix = xs(col);
+
+			first.values.sort((a,b)=> {
+				return (b.values[0].value + b.values[1].value) - (a.values[0].value + a.values[1].value);
+			});
+
+			axisData.push({x1:xs(col), y1:ys(0), x2:xs(col), y2:ys.range()[1]+40});
+
+
+			first.values.forEach((second, row)=>{
+				let iy = ys(row);
+				labelsData.push({
+					data:{
+						key:first.key
+					},
+					first: true,
+					y: ys.range()[0] - 40,
+					x: ix
+				});
+
+				second.values.forEach((third)=>{
+					let xw = (third.value / mv) * (columnWidth * 0.25);
+					xw *= (third.key === "M" ? -1 : 1);
+
+					labelsData.push({
+						data:{
+							key:second.key
+						},
+						y: iy + 60,
+						x: ix
+					});
+
+					d3.range(0,third.value).forEach((n)=>{
+						s.data[c].tx = ix +(n/third.value)*xw;
+						s.data[c].tx += (third.key === "M" ? -5 : 5);
+						s.data[c].ty = iy + Math.random()*30 ;
+						s.data[c].sprite.tint = third.key === "M" ? 0x2864C7 : 0xC4256A;
+						c++;
+					});
+				});
+			});
+		});
+
+		updateLabels(labelsData);
+		updateAxis(axisData);
+	}
+
+	function positionNodesInCircles() {
+		// position nodes
+		s.data.forEach((d,i)=>{
+			const cl = clustersInfo[pIndex];
+			if(c > cl.value) {
+				pIndex++;
+				c = 0;
+			}
+
+			let p = sampleCircle(cl.r, cl.x, cl.y)
+			d.tx = p.x;
+			d.ty = p.y;
+
+			c++;
+		});
+	}
+	
 	function getHierarchy(n) {
 		let p = n.map(d=>({key:d.key, value:d.value}));
 		return d3.hierarchy({children:p}).sum(d=>d.value);
 	}
-
 	
 	function sampleCircle(cr, cx, cy) {
 		let or = cr * cr;
@@ -344,8 +536,6 @@ function updateLayout(s) {
 			y: Math.sin(angle) * r + cy		
 		};
 	}
-
-
 
 	function updateLabels(data) {
 		
@@ -360,33 +550,49 @@ function updateLayout(s) {
 
 		let selection = d3.selectAll("mylabel.p").data(data, d=>d.name);
 
+		const fontSize = 12;
+		const pw = fontSize * 0.8;
+		const ph = fontSize * 0.7;
+
 
 		selection
 		.enter()
 		.append("mylabel")
 		.attr("class","p")
 		.each((d,i)=>{
-			let text = new PIXI.Text(d.data.key.toUpperCase(),{fontFamily : 'Arial', fontSize: 12, fill : 0x2B0B69, align : 'center'});
+			let text = new PIXI.Text(d.data.key.toUpperCase(),{fontFamily : 'Arial', fontSize: fontSize, fill : 0x2B0B69});
 			let cont = new PIXI.Sprite();
 			let g = new PIXI.Graphics();
 			const tw = text.width;
 			const th = text.height;
-			const pw = tw *.2;
-			const ph = th *.12;
 			g.beginFill(d.first ? 0xff0000: 0xffffff, .8);
 			g.drawRect(-pw*.5,-ph*.5, tw+pw, th+ph);
 			g.endFill();
-			cont.position.x = d.x - tw * .5;
-			cont.position.y = d.y - th * .5;
+			cont.position.x = d.x;
+			cont.position.y = d.y;
+			if(!d.labelLeftAligned) {
+				cont.position.x -= tw * .5;
+				cont.position.y -= th * .5;
+			} 
 			cont.addChild(g);
 			cont.addChild(text);
 			stage.addChild(cont);
 			d.cont = cont;
 			TweenMax.from(cont, 1, {delay:i*.01+1, alpha:0})
 		});
+	}
 
+	function updateAxis(data) {
 
+		// axisGraphics.clear();
+		axisGraphics.lineStyle(1,0xffffff);
 
+		if(!data.length) return;
+
+		data.forEach(d=>{
+			axisGraphics.moveTo(d.x1,d.y1);
+			axisGraphics.lineTo(d.x2,d.y2);
+		});
 	}
 }
 
