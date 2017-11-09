@@ -1,10 +1,11 @@
 /* jslint esversion:6, unused:true */
 
-const FONTSIZE = 12;
+const FONTSIZE = 6;
 
 
 window.settings = new function() {
-	this.wander = 3.1;
+	this.wander = 0.8;
+	this.speed = 1;
 
 }();
 let gui;
@@ -12,6 +13,7 @@ let gui;
 window.onload = function() {
 	gui = new dat.GUI();
 	gui.add(window.settings, 'wander', 0, 10).listen();
+	gui.add(window.settings, 'speed', 1, 100).listen();
 	gui.close();
 };
 
@@ -75,7 +77,7 @@ function changeDimension(valueA, valueB, valueC) {
 		o.dimensionC = null;
 	} else {
 
-		if(valueB === undefined) {
+		if(valueB === undefined && valueC === undefined) {
 			o.dimensionA = valueA;
 			o.dimensionB = null;
 			o.clusters = d3.nest()
@@ -203,7 +205,7 @@ function init() {
 			const name = el.attr("name");
 			const value = el.node().selectedOptions[0].value;
 			if(name == "dimensionB") {
-				changeDimension(state.dimensionA, value);
+				changeDimension(state.dimensionA, value, state.dimensionC || undefined);
 			} else {
 				changeDimension(value);
 			}
@@ -309,7 +311,7 @@ function updateLayout(s) {
 	
 
 	if(s.dimensionA !== null && s.dimensionB === null) {
-		window.settings.wander = 3.1;
+		window.settings.wander = 0.8;
 
 
 		pack = pack.size([width, height]).padding(height*0.1);
@@ -319,7 +321,7 @@ function updateLayout(s) {
 		updateLabels(clustersInfo);
 		
 	} else if(s.dimensionC === null && s.dimensionB !== null) {
-		window.settings.wander = 3.1;
+		window.settings.wander = 0.8;
 
 		pack = pack.size([width, height]).padding(height*0.05);
 
@@ -395,7 +397,7 @@ function updateLayout(s) {
 		let mf = d3.max(years, (d)=>+d.value);
 
 		
-		let xss = d3.scaleLinear().domain(ae).range([width*.25, width*.75]);
+		let xss = d3.scaleLinear().domain(ae).range([width*.1, width*.8]);
 		let yss = d3.scaleLinear().domain([0, allClusters.length-1]).range([height*.1, height*.9]);
 		let y2s = d3.scaleLinear().domain([0, mf]).range([0, (yss(1)-yss.range()[0])*.5]);
 
@@ -411,7 +413,7 @@ function updateLayout(s) {
 					key:first.key
 				},
 				y: yss(row) - FONTSIZE,
-				x: width*0.9,
+				x: xss.range()[1] * 1.1,
 				labelLeftAligned: true,
 				first: true
 			});
@@ -426,7 +428,7 @@ function updateLayout(s) {
 					},
 					labelLeftAligned: true,
 					y:yss(row) - FONTSIZE,
-					x: width*0.8
+					x: xss.range()[1]
 				});
 
 				axisData.push({
@@ -465,11 +467,12 @@ function updateLayout(s) {
 		const columnWidth = width *.1;
 		const graphWidth = (columnWidth * s.clusters.length);
 
+		// max number of rows
+		let mnc = d3.max(s.clusters, d=>d.values.length);
 
 		const xs = d3.scaleLinear().domain([0, s.clusters.length-1]).range([(width - graphWidth)*.5, (width + graphWidth) *.5 ]);
-		const ys = d3.scaleLinear().domain([0, s.clusters[0].values.length-1]).range([height*.25, height*.75]);
-		
-		const xss = d3.scaleLinear().domain([0, mv]).range([0, columnWidth *.5]);
+		const ys = d3.scaleLinear().domain([0, mnc-1]).range([height*.1, height*.95]);
+		const xss = d3.scaleLinear().domain([1, mv]).range([0, columnWidth *.5]);
 
 		let c = 0;
 		let labelsData = [];
@@ -480,13 +483,16 @@ function updateLayout(s) {
 
 			let ix = xs(col);
 
+
+			axisData.push({x1:xs(col), y1:ys(0), x2:xs(col), y2:ys.range()[1]});
+			
 			first.values.sort((a,b)=> {
-				if(!b.values[1] || !b.values[0] || !a.values[1] || !a.values[0]) return a.values[0].value;
+				if(!a.values[1] || !a.values[0]) return 1;
+				if(!b.values[1] || !b.values[0]) return -1;
 				return (b.values[0].value + b.values[1].value) - (a.values[0].value + a.values[1].value);
 			});
 
-			axisData.push({x1:xs(col), y1:ys(0), x2:xs(col), y2:ys.range()[1]+40});
-
+			console.log(first.values	)
 
 			first.values.forEach((second, row)=>{
 				let iy = ys(row);
@@ -507,14 +513,15 @@ function updateLayout(s) {
 						data:{
 							key:second.key
 						},
-						y: iy + 60,
-						x: ix
+						labelLeftAligned: true,
+						y: iy,
+						x: ix + xss.range()[1]
 					});
 
-					d3.range(0,third.value).forEach((n)=>{
+					d3.range(0,third.value).forEach((n, i)=>{
 						s.data[c].tx = ix +(n/third.value)*xw;
 						s.data[c].tx += (third.key === "M" ? -5 : 5);
-						s.data[c].ty = iy + Math.random()*30 ;
+						s.data[c].ty = iy;
 						s.data[c].sprite.tint = third.key === "M" ? 0x2864C7 : 0xC4256A;
 						c++;
 					});
@@ -599,7 +606,7 @@ function updateLayout(s) {
 			cont.addChild(text);
 			stage.addChild(cont);
 			d.cont = cont;
-			TweenMax.from(cont, 1, {delay:i*.01+1, alpha:0})
+			TweenMax.from(cont, 1.5, {delay:1, alpha:0})
 		});
 	}
 
@@ -628,8 +635,9 @@ let time = 0;
 function tick() {
 	time+=0.01;
 	renderer.render(stage);
+	let globalspeed = window.settings.speed/100;
 	state.data.forEach((d,i)=> {
-		let speed = d.offset * .2 + .1;
+		let speed = d.offset * globalspeed + .1;
 		d.sprite.position.x += (d.tx-d.sprite.position.x)*speed;
 		d.sprite.position.y += (d.ty-d.sprite.position.y)*speed;
 		d.randomWalk += Math.random() * 2 - 1;
