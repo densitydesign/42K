@@ -1,6 +1,11 @@
 /* jslint esversion:6, unused:true */
+
+const FONTSIZE = 12;
+
+
 window.settings = new function() {
 	this.wander = 3.1;
+
 }();
 let gui;
 
@@ -374,6 +379,7 @@ function updateLayout(s) {
 	function histogram() {
 		window.settings.wander = 0.0;
 
+		let axisData = [];
 		let allClusters = [];
 		let years = [];
 		s.clusters.forEach(d=>d.values.forEach(d=>{
@@ -404,20 +410,30 @@ function updateLayout(s) {
 				data:{
 					key:first.key
 				},
-				y: yss(row),
+				y: yss(row) - FONTSIZE,
 				x: width*0.9,
 				labelLeftAligned: true,
 				first: true
 			});
 
+
+
 			first.values.forEach((second)=> {
+				
 				labelsData.push({
 					data:{
 						key:second.key
 					},
 					labelLeftAligned: true,
-					y:yss(row),
+					y:yss(row) - FONTSIZE,
 					x: width*0.8
+				});
+
+				axisData.push({
+					x1: xss.range()[0], 
+					x2: xss.range()[1], 
+					y1:yss(row) + FONTSIZE*.5,
+					y2:yss(row) + FONTSIZE*.5,
 				});
 				second.values.forEach((third)=> {
 
@@ -432,6 +448,7 @@ function updateLayout(s) {
 			});
 		});
 
+		updateAxis(axisData);
 		updateLabels(labelsData);
 	}
 
@@ -444,12 +461,16 @@ function updateLayout(s) {
 
 		// max value of all records
 		let mv = d3.max(s.clusters, (d)=>d3.max(d.values, (d)=>d3.max(d.values, (d)=>d.value)));
-		
 
-		const xs = d3.scaleLinear().domain([0, s.clusters.length-1]).range([width*.25, width*.75]);
+		const columnWidth = width *.1;
+		const graphWidth = (columnWidth * s.clusters.length);
+		console.log(width, graphWidth)
+
+		const xs = d3.scaleLinear().domain([0, s.clusters.length-1]).range([(width - graphWidth)*.5, (width + graphWidth) *.5 ]);
 		const ys = d3.scaleLinear().domain([0, s.clusters[0].values.length-1]).range([height*.25, height*.75]);
-		// vertical layout
-		const columnWidth = (width*.5) / s.clusters.length;
+		
+		const xss = d3.scaleLinear().domain([0, mv]).range([0, columnWidth *.5]);
+
 		let c = 0;
 		let labelsData = [];
 		let axisData = [];
@@ -478,7 +499,7 @@ function updateLayout(s) {
 				});
 
 				second.values.forEach((third)=>{
-					let xw = (third.value / mv) * (columnWidth * 0.25);
+					let xw = xss(third.value);
 					xw *= (third.key === "M" ? -1 : 1);
 
 					labelsData.push({
@@ -550,9 +571,8 @@ function updateLayout(s) {
 
 		let selection = d3.selectAll("mylabel.p").data(data, d=>d.name);
 
-		const fontSize = 12;
-		const pw = fontSize * 0.8;
-		const ph = fontSize * 0.7;
+		const pw = FONTSIZE * 0.8;
+		const ph = FONTSIZE * 0.7;
 
 
 		selection
@@ -560,7 +580,7 @@ function updateLayout(s) {
 		.append("mylabel")
 		.attr("class","p")
 		.each((d,i)=>{
-			let text = new PIXI.Text(d.data.key.toUpperCase(),{fontFamily : 'Arial', fontSize: fontSize, fill : 0x2B0B69});
+			let text = new PIXI.Text(d.data.key.toUpperCase(),{fontFamily : 'Arial', fontSize: FONTSIZE, fill : 0x2B0B69});
 			let cont = new PIXI.Sprite();
 			let g = new PIXI.Graphics();
 			const tw = text.width;
@@ -585,6 +605,7 @@ function updateLayout(s) {
 	function updateAxis(data) {
 
 		axisGraphics.clear();
+		axisGraphics.alpha = 0;
 		axisGraphics.lineStyle(1,0xffffff);
 
 		if(!data.length) return;
@@ -593,6 +614,9 @@ function updateLayout(s) {
 			axisGraphics.moveTo(d.x1,d.y1);
 			axisGraphics.lineTo(d.x2,d.y2);
 		});
+
+		TweenMax.to(axisGraphics, 1, {delay:1, alpha:.5})
+
 	}
 }
 
