@@ -3,12 +3,14 @@
 const FONTSIZE = 7;
 
 
+// -- GUI
+let gui;
+
 window.settings = new function() {
 	this.wander = 0.8;
 	this.speed = 1;
 
 }();
-let gui;
 
 window.onload = function() {
 	gui = new dat.GUI();
@@ -158,7 +160,7 @@ function selectDemographic(d) {
 // -- ACCESSORS
 
 function loadData(callback) {
-	d3.tsv("assets/data/dati-studenti-professori.tsv", ( error, data)=>{
+	d3.tsv("assets/dati-studenti-professori.tsv", ( error, data)=>{
 		if(error) throw new Error(error.target.response);
 		callback(data);
 	});
