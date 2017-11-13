@@ -382,34 +382,40 @@ function updateLayout(s) {
 	} else if(s.dimensionC === null && s.dimensionB !== null) {
 		window.settings.wander = 0.8;
 
-		pack = pack.size([width, height]).padding(height*0.05);
+		let dataLabels = [];
 
-		// TODO we may not need to change data structure 
-		s.clusters.forEach((d)=>d.children = d.values);
+		let startX = width *.2;
+		let col = (width*.95-startX)/s.clusters.length;
+		// pack each cluster
+		pack = pack.size([col*.95, height*.85]).padding(height*.02);
+		s.clusters.forEach((cluster,i)=>{
 
-		let h = d3.hierarchy({children:s.clusters}).sum(d=>{
-			if(d.values) {
-				return d.values.map(d=>d.value).reduce((a,b)=>a+b);
-			} else {
-				return d.value;
-			}
+			let h = d3.hierarchy({children:cluster.values}).sum(d=>d.value);
+			let p = pack(h).children;
+
+			dataLabels.push({
+				first: true,
+				x: startX + col*i + col*.5,
+				y: height*.9,
+				text: cluster.key
+			});
+
+			p.forEach(d=>{
+				d.x += startX;
+				d.x += col*i;
+				dataLabels.push({
+					x: d.x,
+					y: d.y,
+					text: d.data.key
+				});
+				clustersInfo.push(d);
+			});
+
 		});
-
-		let p = pack(h).children;
-		let dataLabel = [];
-
-		p.forEach(d=>{
-			// add labels for parent clusters
-			d.first = true;
-			d.y += d.r;
-			d.text = d.data.key;
-			dataLabel.push(d);
-			dataLabel = dataLabel.concat(d.children.map(d=>({x:d.x, y:d.y, text:d.data.key})));
-			clustersInfo = clustersInfo.concat(d.children);
-		});
-
 		positionNodesInCircles();
-		updateLabels(dataLabel);
+		updateLabels(dataLabels);
+
+
 
 	} else if(s.dimensionC !== null) {
 
@@ -458,7 +464,7 @@ function updateLayout(s) {
 		let mf = d3.max(years, (d)=>+d.value);
 
 
-		let xss = d3.scaleLinear().domain(ae).range([width*.1, width*.8]);
+		let xss = d3.scaleLinear().domain(ae).range([width*.25, width*.8]);
 		let yss = d3.scaleLinear().domain([0, allClusters.length-1]).range([height*.1, height*.9]);
 		let y2s = d3.scaleLinear().domain([0, mf]).range([0, (yss(1)-yss.range()[0])*.5]);
 
@@ -542,22 +548,22 @@ function updateLayout(s) {
 		let mnc = d3.max(s.clusters, d=>d.values.length);
 
 		// const xs = d3.scaleLinear().domain([0, s.clusters.length-1]).range([(height - graphheight)*.5, (height + graphheight) *.5 ]);
-		const xs = d3.scaleLinear().domain([0, mnc-1]).range([width*.3, width*.9]);
+		const xs = d3.scaleLinear().domain([0, mnc-1]).range([width*.25, width*.9]);
 		const voteScale = d3.scaleLinear().domain([0,110]).range([height*.8, height*.2]);
 		const interval = xs(1)-xs(0);
 
 		// calculate max values dictionary for each evaluation
-		
+
 		let axisLabelsData = voteScale.ticks(5);
 		axisLabelsData.push(110);
 		axisLabelsData = axisLabelsData.map(d=>({
-			x: xs.range()[0]*.9,
+			x: xs.range()[0]*.85,
 			y: voteScale(d),
 			text: d + " ",
 			noBackground: true
 		}));
 
-		let axisX = xs.range()[0]*.94;
+		let axisX = xs.range()[0]*.88;
 		const axisData = [{
 			x1: axisX,
 			y1: voteScale.range()[1],
@@ -573,7 +579,7 @@ function updateLayout(s) {
 		s.clusters.forEach( (first,row) =>{
 
 			first.values.forEach((second, srow)=>{
-				
+
 				let ix = xs(srow);
 
 				if(row > 0) {
@@ -589,7 +595,7 @@ function updateLayout(s) {
 				second.values.forEach((third,i)=>{
 					d3.range(third.value).forEach((n, i)=>{
 						if(c<s.data.length) {	
-							s.data[c].tx = ix  + (row >0 ? 1 : -1) *interval*.1;
+							s.data[c].tx = ix  + (row >0 ? 1 : -1) *interval*.08;
 							s.data[c].ty = voteScale(+third.key);
 							s.data[c].sprite.tint = row >0 ? 0xff0000 : 0xffffff; 
 							c++;
@@ -615,10 +621,10 @@ function updateLayout(s) {
 			if(uniqueSdk.indexOf(d.key) ==-1) uniqueSdk.push(d.key);
 		}));
 
-		const gRange = [height*.2, height*.5];
+		const gRange = [height*.3, height*.7];
 		const ys = d3.scaleLinear().domain([0, s.clusters.length-1]).range(gRange);
 		const yss = d3.scaleLinear().domain([1, mv]).range([0, (gRange[1]-gRange[0])/s.clusters.length ]);
-		const xs = d3.scaleLinear().domain([0, uniqueSdk.length-1]).range([width*.1, width*.95]);
+		const xs = d3.scaleLinear().domain([0, uniqueSdk.length-1]).range([width*.3, width*.95]);
 
 		let c = 0;
 		let labelsData = [];
@@ -631,71 +637,63 @@ function updateLayout(s) {
 
 			let iy = ys(row);
 
+			let labelX = xs(0) * .92;
 
 			labelsData.push({
 				text:"M",
 				noBackground: true,
-				x: xs(0) * .8,
+				x: labelX,
 				y: iy -10 
 			});
 
 			labelsData.push({
 				text:"F",
 				noBackground: true,
-				x: xs(0) * .8,
+				x: labelX,
 				y: iy + 10
 			});
 
-			axisData.push({x1:xs.range()[0], y1:ys(row), x2:xs.range()[1], y2:ys(row)});
+			axisData.push({x1:labelX*.9, y1:ys(row), x2:xs.range()[1], y2:ys(row)});
 
-			first.values.sort((a,b)=> {
-				return 
+			// first.values.sort((a,b)=> {
 				// if(!a.values[1] || !a.values[0]) return 1;
 				// if(!b.values[1] || !b.values[0]) return -1;
 				// return (b.values[0].value + b.values[1].value) - (a.values[0].value + a.values[1].value);
-			});
-			
-			
-			uniqueSdk.forEach((key, col)=>{
+				// });
 
-				let ix = xs(col);
-				// if(col == s.clusters.length -1) {
-				// 	labelsData.push({
-				// 		text: key,
-				// 		first: true,
-				// 		y: iy,
-				// 		x: xs.range()[0] * .7
-				// 	});
-				// }
 
-				let second = first.values.find(d=>d.key==key);
-				if(second) {
-				console.log("second")
+				uniqueSdk.forEach((key, col)=>{
 
-					second.values.forEach((third)=>{
-						let yw = yss(third.value);
-						yw *= (third.key === "M" ? -1 : 1);
-						
-						labelsData.push({
-							text:second.key,
-							y: ys.range()[1] * 1.2,
-							x: ix
+					let ix = xs(col);
+
+
+					let second = first.values.find(d=>d.key==key);
+					if(second) {
+
+						second.values.forEach((third)=>{
+							let yw = yss(third.value);
+							yw *= (third.key === "M" ? -1 : 1);
+
+							labelsData.push({
+								text:second.key,
+								y: ys.range()[1] * 1.2,
+								x: ix
+							});
+
+
+							d3.range(0,third.value).forEach((n, i)=>{
+								s.data[c].tx = ix ;
+								s.data[c].ty = iy +(n/third.value)*yw;
+								s.data[c].ty += third.key === "M" ? -5 : 5;
+								// s.data[c].sprite.tint = third.key === "M" ? 0x2864C7 : 0xC4256A;
+								c++;
+							});
 						});
+					}
 
-
-						d3.range(0,third.value).forEach((n, i)=>{
-							s.data[c].tx = ix ;
-							s.data[c].ty = iy +(n/third.value)*yw;
-							s.data[c].ty += third.key === "M" ? -5 : 5;
-							// s.data[c].sprite.tint = third.key === "M" ? 0x2864C7 : 0xC4256A;
-							c++;
-						});
-					});
-				}
+				});
 
 			});
-
-		});
 
 
 		updateLabels(labelsData);
@@ -795,10 +793,10 @@ function updateLayout(s) {
 
 		axisGraphics.clear();
 		axisGraphics.alpha = 0;
-		axisGraphics.lineStyle(1,0xffffff);
 
 		if(!data.length) return;
 
+		axisGraphics.lineStyle(1,0xffffff);
 		data.forEach(d=>{
 			axisGraphics.moveTo(d.x1,d.y1);
 			axisGraphics.lineTo(d.x2,d.y2);
