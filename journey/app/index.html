@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Student journey</title>
+<link rel="stylesheet" href="../../common/style.css">
+<style>
+
+
+.nodeLabel {
+	pointer-events: none;
+	fill: #fff;
+}
+
+.link {
+	fill: none;
+	stroke-opacity: .2;
+}
+
+.link:hover {
+	stroke-opacity: 1;
+}
+#selectcont {
+	position: absolute;
+	bottom: 2rem;
+	right: 2rem;
+}
+
+</style>
+<body>
+
+	<script src="../../common/js/d3.v4.min.js"></script>
+	<script src="d3-sankey.min.js"></script>
+	<script src="journey.js"></script>
+	
+	<div id="selectcont">
+		<select id="selectyears" />
+	</div>
+</body>
+
