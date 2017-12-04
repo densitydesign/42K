@@ -1,6 +1,6 @@
 var d3 = require('d3');
 var fs = require('fs');
-let name = "170725_studenti-inizio-2011";
+let name = "171115_studenti-inizio-2016";
 
 fs.readFile("csv/"+name+".csv", "utf8", function(error, data) {
 	
@@ -33,12 +33,12 @@ fs.readFile("csv/"+name+".csv", "utf8", function(error, data) {
 	});
 
 
-	fs.writeFile("app/data/"+name+".json", JSON.stringify({nodes, links}), function(err){
+	fs.writeFile("app/data/"+name.slice(-4)+".json", JSON.stringify({nodes, links}), function(err){
 		if(err) {
 			return console.log(err);
 		}
 
-		console.log(name+".json saved!");
+		console.log(name.slice(-4)+".json saved!");
 	}); 
 
 

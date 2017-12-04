@@ -15,8 +15,7 @@ let sankey = d3.sankey()
 .nodeAlign(d3.sankeyLeft)
 .extent([[150, height*.15], [width-150, height-100]]);
 
-
-let years = ["170725_studenti-inizio-2011","171115_studenti-inizio-2012", "171115_studenti-inizio-2013"];
+let years = ["2011","2012","2013","2014","2015","2016"];
 let yearsDict = {};
 let loadedCount =0;
 
