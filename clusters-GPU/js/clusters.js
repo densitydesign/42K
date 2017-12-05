@@ -1,6 +1,6 @@
 /* jslint esversion:6, unused:true */
 
-const FONTSIZE = 7;
+const FONTSIZE = 11;
 
 
 // -- GUI
@@ -9,7 +9,6 @@ let gui;
 window.settings = new function() {
 	this.wander = 0.8;
 	this.speed = 1;
-
 }();
 
 window.onload = function() {
@@ -34,6 +33,7 @@ window.state = {
 let width = document.body.clientWidth;
 let height = document.body.clientHeight;
 let pack = d3.pack();
+let time = 0;
 
 
 // -- PIXI
@@ -56,105 +56,8 @@ const $dimensionA = d3.select("#dimensionA");
 const $dimensionB = d3.select("#dimensionB");
 const $dimensionC = d3.select("#dimensionC");
 
-// -- ACTIONS
-function changeDemographic(d) {
-	let o = Object.assign({}, state);
-	o.data = o.result.filter(selectDemographic(d));
-	o.type = d;
-	o.dimensionA = null;
-	o.dimensionB = null;
-	o.dimensionC = null;
-	o.clusters = null;
-	changeState(o);
-}
-
-function changeDimension(valueA, valueB, valueC) {
-	
-	let o = Object.assign({}, state);
-
-	if(valueA === "" && valueA !== undefined) {
-		o.clusters = null;
-		o.dimensionA = null;
-		o.dimensionB = null;
-		o.dimensionC = null;
-	} else {
-
-		if(valueB === undefined && valueC === undefined) {
-			o.dimensionA = valueA;
-			o.dimensionB = null;
-			o.dimensionC = null;
-			o.clusters = d3.nest()
-			.key(d=>d[valueA])
-			.rollup(d=>d.length)
-			.entries(o.data);
-		} else if(valueB !== undefined && valueC === undefined) {
-			o.dimensionA = valueA;
-			o.dimensionB = valueB;
-			o.dimensionC = null;
-			o.clusters = d3.nest()
-			.key(d=>d[valueA])
-			.key(d=>d[valueB])
-			.rollup(d=>d.length)
-			.entries(o.data);
-		} else if(valueB !== undefined && valueC !== undefined) {
-			
-			o.dimensionA = valueA;
-			o.dimensionB = valueB;
-			o.dimensionC = valueC;
-
-			
-
-			let myData = o.data;
-
-			// always have nationality as smaller dimension
-			if(valueA === "Cittadinanza") {
-				valueA = valueB;
-				valueB = "Cittadinanza";
-			}
-			
-
-			// aggregate nations with a density frequency under 100 
-			if(valueB === "Cittadinanza") {
-				let test = d3.nest()
-				.key(d=>d[valueB])
-				.rollup(d=>d.length)
-				.entries(myData);
-				myData = myData.map(d=>{
-					let y =false;
-					test.forEach(n=>{
-						if(d.Cittadinanza == n.key && n.value < 100) {
-							y = true;
-						}	
-					});
-					let k = Object.assign(d, {});
-					if(y) {
-						k.Cittadinanza = "Altro";
-					}
-					return k;
-				});
-			}
-
-
-			o.clusters = d3.nest()
-			.key(d=>d[valueA])
-			.key(d=>d[valueB])
-			.key(d=>d[valueC])
-			.rollup(d=>d.length)
-			.entries(myData);
-
-		} else {
-			throw new Error("wrong number of dimensions");
-		}
-
-	}
-	changeState(o);
-}
-
-
-// -- REDUCERS
-function selectDemographic(d) {
-	return (a)=> a["Tipo"] === d;
-}
+// -- START
+init();
 
 
 // -- ACCESSORS
@@ -166,7 +69,48 @@ function loadData(callback) {
 	});
 }
 
-function changeState(s){
+function changeDemographic(d) {
+	let o = Object.assign({}, state);
+	o.data = o.result.filter((a)=> a["Tipo"] === d);
+	o.type = d;
+	o.dimensionA = null;
+	o.dimensionB = null;
+	o.dimensionC = null;
+	o.nestedData = null;
+	updateState(o);
+}
+
+function changeDimension(valueA, valueB, valueC){
+
+	let o = Object.assign({}, state);
+	
+	//TODO this can be optimized	
+	if(valueA === "" && valueA !== undefined) {
+		o.dimensionA = null;
+		o.dimensionB = null;
+		o.dimensionC = null;
+		o.nestedData = null;
+	} else if(valueB === undefined && valueC === undefined) {
+		o.dimensionA = valueA;
+		o.dimensionB = null;
+		o.dimensionC = null;
+		o.nestedData = getNestedData([valueA], o.data);
+	} else if(valueB !== undefined && valueC === undefined) {
+		o.dimensionA = valueA;
+		o.dimensionB = valueB;
+		o.dimensionC = null;
+		o.nestedData = getNestedData([valueA, valueB], o.data);
+	} else if(valueB !== undefined && valueC !== undefined) {
+		o.dimensionA = valueA;
+		o.dimensionB = valueB;
+		o.dimensionC = valueC;
+		o.nestedData = getNestedData([valueA, valueB, valueC], o.data);
+	}
+
+	updateState(o);
+}
+
+function updateState(s){
 	console.log("previous state", state);
 	console.log("current state", s);
 
@@ -370,7 +314,7 @@ function updateLayout(s) {
 
 
 		pack = pack.size([width, height]).padding(height*0.1);
-		clustersInfo =  pack(getHierarchy(s.clusters)).children; 
+		clustersInfo =  pack(getHierarchy(s.nestedData)).children; 
 
 		positionNodesInCircles();
 		updateLabels(clustersInfo.map(d=>({
@@ -380,38 +324,56 @@ function updateLayout(s) {
 		})));
 
 	} else if(s.dimensionC === null && s.dimensionB !== null) {
-		window.settings.wander = 0.8;
+		window.settings.wander = 0.4;
 
 		let dataLabels = [];
+		const offsetX = width*.25;
+		let size = height;
+		let offsetY = 0;
+		if(s.nestedData.length < 3) {
+			size *= 1.2;
+			offsetY = size * .1;
+		}
 
-		let startX = width *.2;
-		let col = (width*.95-startX)/s.clusters.length;
 		// pack each cluster
-		pack = pack.size([col*.95, height*.85]).padding(height*.02);
-		s.clusters.forEach((cluster,i)=>{
+		pack = pack.padding(d=>{
+			return d.depth == 1 ? 10 : d.depth == 0 ? 0 : 40
+		}).size([size, size]);
 
-			let h = d3.hierarchy({children:cluster.values}).sum(d=>d.value);
-			let p = pack(h).children;
+		s.nestedData.forEach(d=>{
+			d.children = d.values;
+		});
+		let h = d3.hierarchy({children:s.nestedData}).sum(d=>d.value);
+		let packed = pack(h);
+
+		packed.children
+		.forEach(d=>{
 
 			dataLabels.push({
 				first: true,
-				x: startX + col*i + col*.5,
-				y: height*.9,
-				text: cluster.key
+				x: d.x + offsetX,
+				y: d.y + d.r*.9 - offsetY,
+				text: d.data.key
 			});
 
-			p.forEach(d=>{
-				d.x += startX;
-				d.x += col*i;
+			d.children
+			.forEach(dd=>{
+
+				dd.x += offsetX;
+				dd.y -= offsetY;
+
 				dataLabels.push({
-					x: d.x,
-					y: d.y,
-					text: d.data.key
+					x: dd.x,
+					y: dd.y - dd.r - FONTSIZE*.5,
+					text: dd.data.key
 				});
-				clustersInfo.push(d);
-			});
 
+				clustersInfo.push(dd);
+
+			});
 		});
+
+
 		positionNodesInCircles();
 		updateLabels(dataLabels);
 
@@ -451,7 +413,7 @@ function updateLayout(s) {
 		let axisData = [];
 		let allClusters = [];
 		let years = [];
-		s.clusters.forEach(d=>d.values.forEach(d=>{
+		s.nestedData.forEach(d=>d.values.forEach(d=>{
 			allClusters.push(d.key);
 			d.values.forEach(d=>{
 				years.push(d);
@@ -485,7 +447,6 @@ function updateLayout(s) {
 		labelsData.push({
 			text:ae[0] +" ",
 			labelLeftAligned: true,
-			noBackground: true,
 			rotation: 10,
 			y: axisY,
 			x: xss.range()[0]
@@ -494,14 +455,13 @@ function updateLayout(s) {
 		labelsData.push({
 			text:ae[1] +" ",
 			labelLeftAligned: true,
-			noBackground: true,
 			rotation: 10,
 			y: axisY,
 			x: xss.range()[1] * 1.005
 		});
 
 
-		s.clusters.forEach((first)=>{
+		s.nestedData.forEach((first)=>{
 
 			labelsData.push({
 				text:first.key,
@@ -545,9 +505,9 @@ function updateLayout(s) {
 
 		// const columnWidth = width *.1;
 
-		let mnc = d3.max(s.clusters, d=>d.values.length);
+		let mnc = d3.max(s.nestedData, d=>d.values.length);
 
-		// const xs = d3.scaleLinear().domain([0, s.clusters.length-1]).range([(height - graphheight)*.5, (height + graphheight) *.5 ]);
+		// const xs = d3.scaleLinear().domain([0, s.nestedData.length-1]).range([(height - graphheight)*.5, (height + graphheight) *.5 ]);
 		const xs = d3.scaleLinear().domain([0, mnc-1]).range([width*.25, width*.9]);
 		const voteScale = d3.scaleLinear().domain([0,110]).range([height*.8, height*.2]);
 		const interval = xs(1)-xs(0);
@@ -560,7 +520,6 @@ function updateLayout(s) {
 			x: xs.range()[0]*.85,
 			y: voteScale(d),
 			text: d + " ",
-			noBackground: true
 		}));
 
 		let axisX = xs.range()[0]*.88;
@@ -576,7 +535,7 @@ function updateLayout(s) {
 		let c = 0; 
 		let labelsData = [];
 
-		s.clusters.forEach( (first,row) =>{
+		s.nestedData.forEach( (first,row) =>{
 
 			first.values.forEach((second, srow)=>{
 
@@ -613,17 +572,17 @@ function updateLayout(s) {
 	function butterflyChart() {
 
 		// max value in all records
-		let mv = d3.max(s.clusters, (d)=>d3.max(d.values, (d)=>d3.max(d.values, (d)=>d.value)));
+		let mv = d3.max(s.nestedData, (d)=>d3.max(d.values, (d)=>d3.max(d.values, (d)=>d.value)));
 
 		// unique second dimensions keys
 		let uniqueSdk = [];
-		s.clusters.forEach(d=>d.values.forEach(d=>{
+		s.nestedData.forEach(d=>d.values.forEach(d=>{
 			if(uniqueSdk.indexOf(d.key) ==-1) uniqueSdk.push(d.key);
 		}));
 
 		const gRange = [height*.3, height*.7];
-		const ys = d3.scaleLinear().domain([0, s.clusters.length-1]).range(gRange);
-		const yss = d3.scaleLinear().domain([1, mv]).range([0, (gRange[1]-gRange[0])/s.clusters.length ]);
+		const ys = d3.scaleLinear().domain([0, s.nestedData.length-1]).range(gRange);
+		const yss = d3.scaleLinear().domain([1, mv]).range([0, (gRange[1]-gRange[0])/s.nestedData.length ]);
 		const xs = d3.scaleLinear().domain([0, uniqueSdk.length-1]).range([width*.3, width*.95]);
 
 		let c = 0;
@@ -633,7 +592,7 @@ function updateLayout(s) {
 
 
 
-		s.clusters.forEach((first, row)=>{
+		s.nestedData.forEach((first, row)=>{
 
 			let iy = ys(row);
 
@@ -641,14 +600,12 @@ function updateLayout(s) {
 
 			labelsData.push({
 				text:"M",
-				noBackground: true,
 				x: labelX,
 				y: iy -10 
 			});
 
 			labelsData.push({
 				text:"F",
-				noBackground: true,
 				x: labelX,
 				y: iy + 10
 			});
@@ -747,29 +704,23 @@ function updateLayout(s) {
 
 		let selection = d3.selectAll("mylabel.p").data(data, d=>d.text);
 
-		const pw = FONTSIZE * 0.8;
-		const ph = FONTSIZE * 0.7;
-
 
 		selection
 		.enter()
 		.append("mylabel")
 		.attr("class","p")
 		.each((d,i)=>{
-			const textcolor = d.noBackground ? "white" : 0x2B0B69;
-			const text = new PIXI.Text(d.text.toUpperCase(),{fontFamily : 'Arial', fontSize: FONTSIZE, fill : textcolor});
+
+
+			let fontWeight = d.first ? 'bold' : 'normal';
+			const textcolor = "white";
+			const textValue = d.first ? d.text.toUpperCase() : toTitleCase(d.text.toLowerCase());
+			const text = new PIXI.Text(textValue, {fontFamily : 'Calibre', fontWeight: fontWeight, fontSize: FONTSIZE, fill : textcolor});
 			const cont = new PIXI.Sprite();
 			const tw = text.width;
 			const th = text.height;
 
 
-			if(!d.noBackground) {
-				let g = new PIXI.Graphics();
-				g.beginFill(d.first ? 0xff0000: 0xffffff, .8);
-				g.drawRect(-pw*.5,-ph*.5, tw+pw, th+ph);
-				g.endFill();
-				cont.addChild(g);
-			}
 
 			cont.position.x = d.x;
 			cont.position.y = d.y;
@@ -807,9 +758,6 @@ function updateLayout(s) {
 }
 
 
-
-
-let time = 0;
 function tick() {
 	time+=0.01;
 	renderer.render(stage);
@@ -829,4 +777,8 @@ function tick() {
 	window.requestAnimationFrame(tick);
 }
 
-init();
+
+function toTitleCase(str)
+{
+	return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+}

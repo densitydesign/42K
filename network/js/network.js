@@ -7,7 +7,7 @@ const SPAWN_DELAY = 10;
 let gui;
 window.settings = new function() {
 	this.distance = 1;
-	this.charge = -1;
+	this.charge = -2;
 	this.radius = 5;
 }();
 
@@ -93,13 +93,13 @@ d3.json("data/171110_progetti-didattica.json", function(error, g) {
 
 	let projects = {};
 	graph.nodes.forEach(d=>{
+		// hacky way of getting the years and funding – we could get a better date out of giphy
 		d.finanziamento = +d.attributes.finanziamento;
 		d.type = d.finanziamento != 1.0 ? "project" : "uni";
 		if(d.type == "project") {
 			d.participants = 0;
 			projects[d.id] = d;
 		}
-		// hacky way of getting the year – we could get a better date out of giphy
 		let date = d.attributes.Interval;
 		d.startDate = +date.substring(2,6);
 		d.endDate = +date.substring(date.length-8,date.length-4);
