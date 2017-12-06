@@ -86,7 +86,7 @@ function update(originalData) {
 		let selectedSchool = d.source.school || d.target.school;
 		console.log(selectedSchool)
 		let data = JSON.parse(JSON.stringify(yearsCdsDict[currentYear]));
-		let nodes = data.nodes.filter(d=>d.school === selectedSchool || d.school == "Liceo");
+		let nodes = data.nodes.filter(d=>d.school === selectedSchool || d.type == "liceo");
 		let links = data.links.filter(d=>{
 			let a = findNodeById(d.source, nodes);
 			let b = findNodeById(d.target, nodes);
@@ -113,7 +113,9 @@ function update(originalData) {
 
 	node
 	.append("rect")
-	.attr("fill", "white")
+	.attr("fill", d=>{
+		return d.school ? color(d.school) : "white"
+	})
 	.attr("height", function(d) { return d.y1 - d.y0; })
 	.attr("width", function(d) { return d.x1 - d.x0; })
 
