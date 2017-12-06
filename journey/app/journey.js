@@ -1,5 +1,6 @@
 /* jslint esversion:6, unused:true */
 
+const color = d3.scaleOrdinal(["#2686FC", "#B226E4", "#F28739", "#F01F74"]).domain(["des","arc - urb - cost","ing ind - inf","ing - civ"]);
 
 let width = document.body.clientWidth;
 let height = document.body.clientHeight;
@@ -67,15 +68,15 @@ function update(originalData) {
 
 	var link = svg.append("g")
 	.attr("class", "links")
-	.attr("fill", "none")
-	.attr("stroke", "#000")
-	.attr("stroke-opacity", 0.2)
 	.selectAll("path")
 	.data(data.links)
 	.enter()
 	.append("path")
 	.attr("class", "link")
 	.attr("d", d3.sankeyLinkHorizontal())
+	.attr("stroke", d=>{
+		return d.source.school ? color(d.source.school) : "white"
+	})
 	.attr("stroke-width", function(d) { return Math.max(1, d.width); })
 	.on("mouseover", d=>{
 		let selectedSchool = d.source.school || d.target.school;
