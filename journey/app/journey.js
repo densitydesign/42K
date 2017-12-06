@@ -59,6 +59,21 @@ function init() {
 	update(yearsDict[currentYear]);
 }
 
+function showPath(selectedSchool) {
+	let data = JSON.parse(JSON.stringify(yearsCdsDict[currentYear]));
+	let nodes = data.nodes.filter(d=>d.school === selectedSchool || d.type == "liceo");
+	let links = data.links.filter(d=>{
+		let a = findNodeById(d.source, nodes);
+		let b = findNodeById(d.target, nodes);
+		return a && b;
+	});
+	// remove nodes without links
+	nodes = nodes.filter(d=>{
+		return links.find(dd=>dd.source == d.id || dd.target == d.id);
+	});
+	update({nodes, links});	
+}
+
 function update(originalData) {
 
 	// quickly clone object
@@ -79,26 +94,11 @@ function update(originalData) {
 	})
 	.attr("stroke-width", function(d) { return Math.max(1, d.width); })
 	.on("mouseover", d=>{
-		let selectedSchool = d.source.school || d.target.school;
+		console.log(d.source,d.target)
 	})
 	.on("mousedown", d=>{
-		
 		let selectedSchool = d.source.school || d.target.school;
-		console.log(selectedSchool)
-		let data = JSON.parse(JSON.stringify(yearsCdsDict[currentYear]));
-		let nodes = data.nodes.filter(d=>d.school === selectedSchool || d.type == "liceo");
-		let links = data.links.filter(d=>{
-			let a = findNodeById(d.source, nodes);
-			let b = findNodeById(d.target, nodes);
-			return a && b;
-		});
-		// remove nodes without links
-		nodes = nodes.filter(d=>{
-			return links.find(dd=>dd.source == d.id || dd.target == d.id);
-		});
-		update({nodes, links});
-		// // console.log("source",d.source)
-		// console.log("target",d.target)
+		showPath(selectedSchool);
 	});
 
 	let node = svg.append("g")
@@ -114,6 +114,7 @@ function update(originalData) {
 	node
 	.append("rect")
 	.attr("fill", d=>{
+		if(d.name=== "attiva triennale" || d.name=== "disattivata triennale"  || d.name=== "attiva magistrale" || d.name=== "disattivata magistrale" || d.name === "s") return "#ddd"
 		return d.school ? color(d.school) : "white"
 	})
 	.attr("height", function(d) { return d.y1 - d.y0; })

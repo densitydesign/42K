@@ -24,13 +24,19 @@ fs.readFile("csv/"+name+".csv", "utf8", function(error, data) {
 			d["Carriera Triennale"] = "Laurea Triennale " + d["Scuola Triennale"];
 		} else if(ct == "A") {
 			d["Carriera Triennale"] = "Attiva Triennale";
+		} else if(ct == "D") {
+			d["Carriera Triennale"] = "Disattivata Triennale";
 		}
 
 		if(cm == "L") {
 			d["Carriera Magistrale"] = "Laurea Magistrale " + d["Scuola Magistrale"];
 		} else if(cm == "A") {
-			d["Carriera Magistrale"] = "Attiva Magistrale";
+			d["Carriera Magistrale"] = "Disattivata Magistrale";
+		} else if(cm == "D") {
+			d["Carriera Magistrale"] = "Disattivata Magistrale";
 		}
+
+		
 
 	});
 
@@ -90,7 +96,7 @@ fs.readFile("csv/"+name+".csv", "utf8", function(error, data) {
 	function addToDictionary(a,d) {
 		
 		// don't add nodes with incorrect values
-		if(d.key === "" || d.key == "undefined" ||  d.key === "0" || d.key === "no" || d.key === "D" || d.key == "#N/A" ) return null;
+		if(d.key === "" || d.key == "undefined" ||  d.key === "0" || d.key === "no" || d.key == "#N/A" ) return null;
 		// set the key as a combination of the two dimensions as there are common names between them
 		let newKey = a + d.key;
 
@@ -114,6 +120,8 @@ fs.readFile("csv/"+name+".csv", "utf8", function(error, data) {
 			if(a == "CDS Magistrale" || a == "Scuola Magistrale" || a == "Carriera Magistrale")  {
 				 node.school = d.values[0]['Scuola Magistrale'].toLowerCase();
 			}
+
+
 
 			
 
