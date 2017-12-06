@@ -83,9 +83,9 @@ function update(originalData) {
 	.on("mousedown", d=>{
 		
 		let selectedSchool = d.source.school || d.target.school;
-		
+		console.log(selectedSchool)
 		let data = JSON.parse(JSON.stringify(yearsCdsDict[currentYear]));
-		let nodes = data.nodes.filter(d=>d.school === selectedSchool || d.school == "Liceo" || d.name == "l");
+		let nodes = data.nodes.filter(d=>d.school === selectedSchool || d.school == "Liceo");
 		let links = data.links.filter(d=>{
 			let a = findNodeById(d.source, nodes);
 			let b = findNodeById(d.target, nodes);
@@ -96,6 +96,8 @@ function update(originalData) {
 			return links.find(dd=>dd.source == d.id || dd.target == d.id);
 		});
 		update({nodes, links});
+		// // console.log("source",d.source)
+		// console.log("target",d.target)
 	});
 
 	let node = svg.append("g")

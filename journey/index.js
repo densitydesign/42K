@@ -11,17 +11,40 @@ fs.readFile("csv/"+name+".csv", "utf8", function(error, data) {
 	
 	data = d3.csvParse(data);
 
+
+	// filter out people who didn't do triennale
+	data = data.filter(d=>d["Scuola Triennale"] !== "no")
+
+	// add type of laurea
+	data.forEach(d=>{
+		let ct = d["Carriera Triennale"];
+		let cm = d["Carriera Magistrale"];
+
+		if(ct == "L") {
+			d["Carriera Triennale"] = "Laurea Triennale " + d["Scuola Triennale"];
+		} else if(ct == "A") {
+			d["Carriera Triennale"] = "Attiva Triennale";
+		}
+
+		if(cm == "L") {
+			d["Carriera Magistrale"] = "Laurea Magistrale " + d["Scuola Magistrale"];
+		} else if(cm == "A") {
+			d["Carriera Magistrale"] = "Attiva Magistrale";
+		}
+
+	});
+
 	let links;
 	let nodes;
 	let nodesDict;
 
 	// Liceo > Scuola Triennale > Carriera Triennale > Scuola Magistrale > Carriera Magistrale
-	const dimensionsOverview = ["Liceo", "Scuola Triennale", "Carriera Triennale", "Scuola Magistrale", "Carriera Magistrale"];
-	const dimensionsCds = ["Liceo", "CDS Triennale", "Carriera Triennale", "CDS Magistrale", "Carriera Magistrale"];
+	const mainDimensions = ["Liceo", "Scuola Triennale", "Carriera Triennale", "Scuola Magistrale", "Carriera Magistrale"];
+	const secondDimensions = ["Liceo", "CDS Triennale", "Carriera Triennale", "CDS Magistrale", "Carriera Magistrale"];
 
 
-	createStructure(dimensionsOverview, "");
-	createStructure(dimensionsCds, "_cds");
+	createStructure(mainDimensions, "");
+	createStructure(secondDimensions, "_cds");
 
 	function createStructure(dimensions, suffix) {
 		
@@ -37,10 +60,10 @@ fs.readFile("csv/"+name+".csv", "utf8", function(error, data) {
 				let dimensionB = dimensions[i];
 
 				let n = d3.nest()
-				.key(d=>d[dimensionA]).sortKeys(d3.ascending)
+				.key(d=>d[dimensionA])
 				.key(d=>d[dimensionB])
 				.entries(data);
-				
+
 				n.forEach(d=>addNode(dimensionA, dimensionB, d));
 
 			}
@@ -68,20 +91,33 @@ fs.readFile("csv/"+name+".csv", "utf8", function(error, data) {
 		
 		// don't add nodes with incorrect values
 		if(d.key === "" || d.key == "undefined" ||  d.key === "0" || d.key === "no" || d.key === "D" || d.key == "#N/A" ) return null;
-		
 		// set the key as a combination of the two dimensions as there are common names between them
 		let newKey = a + d.key;
 
+		
 		if(nodesDict[newKey] == undefined) {
 			
-			// add school to nodes so we can filter them in the CdS viz
+			
 			let nodeId = nodes.length;
-			nodes.push({
+			
+			let node = {
 				id: nodeId,
-				name: d.key.toLowerCase(),
-				type: a,
-				school: a == "Liceo" ? "Liceo" : d.values[0]['Scuola Triennale'] 
-			});
+				name: (d.key).toLowerCase(),
+				type: a.toLowerCase()
+			};
+
+			// add school so we can show it later on
+			if(a == "CDS Triennale" || a == "Scuola Triennale"  || a == "Carriera Triennale")  {
+				 node.school = d.values[0]['Scuola Triennale'].toLowerCase();
+			}
+
+			if(a == "CDS Magistrale" || a == "Scuola Magistrale" || a == "Carriera Magistrale")  {
+				 node.school = d.values[0]['Scuola Magistrale'].toLowerCase();
+			}
+
+			
+
+			nodes.push(node);
 			nodesDict[newKey] = nodeId;
 		}
 
