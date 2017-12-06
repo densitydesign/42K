@@ -113,17 +113,13 @@ fs.readFile("csv/"+name+".csv", "utf8", function(error, data) {
 			};
 
 			// add school so we can show it later on
-			if(a == "CDS Triennale" || a == "Scuola Triennale"  || a == "Carriera Triennale")  {
+			if((a == "CDS Triennale" || a == "Scuola Triennale"  || a == "Carriera Triennale")  && d.key != "D" && d.key != "A" )  {
 				 node.school = d.values[0]['Scuola Triennale'].toLowerCase();
 			}
 
-			if(a == "CDS Magistrale" || a == "Scuola Magistrale" || a == "Carriera Magistrale")  {
+			if((a == "CDS Magistrale" || a == "Scuola Magistrale" || a == "Carriera Magistrale") && d.key != "D" && d.key != "A" )  {
 				 node.school = d.values[0]['Scuola Magistrale'].toLowerCase();
 			}
-
-
-
-			
 
 			nodes.push(node);
 			nodesDict[newKey] = nodeId;
