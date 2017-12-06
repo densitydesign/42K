@@ -11,22 +11,31 @@ var svg = d3.select("body")
 
 let sankey = d3.sankey()
 .nodeWidth(4)
+.nodeId(d=>d.id)
 .nodePadding(10)
 .nodeAlign(d3.sankeyLeft)
 .extent([[150, height*.15], [width-150, height-100]]);
 
 let years = ["2011","2012","2013","2014","2015","2016"];
 let yearsDict = {};
+let yearsCdsDict = {};
 let loadedCount =0;
+let currentYear;
 
 loadJson();
 
 function loadJson() {
 	d3.json("data/"+years[loadedCount] +".json", (data)=>{
 		yearsDict[years[loadedCount]] = data;
-		loadedCount++;
-		(loadedCount < years.length) ? loadJson() : init();
+
+		d3.json("data/"+years[loadedCount] +"_cds.json", (dataCds)=>{
+			yearsCdsDict[years[loadedCount]] = dataCds;
+			loadedCount++;
+			(loadedCount < years.length) ? loadJson() : init();
+		});
+
 	})
+
 }
 
 
@@ -35,7 +44,8 @@ function init() {
 	d3.select("#selectyears")
 	.on("change", function() {
 		let sel = d3.select(this).node()
-		update(yearsDict[sel.options[sel.selectedIndex].value]);
+		currentYear = sel.options[sel.selectedIndex].value;
+		update(yearsDict[currentYear]);
 	})
 	.selectAll("option")
 	.data(years)
@@ -44,12 +54,14 @@ function init() {
 	.attr("value", d=>d)
 	.text(d=>d);
 
-	update(yearsDict[years[0]])
+	currentYear = years[0];
+	update(yearsDict[currentYear]);
 }
 
-function update(data) {
-	console.log(data)
+function update(originalData) {
 
+	// quickly clone object
+	let data = JSON.parse(JSON.stringify(originalData));
 	svg.selectAll("*").remove()
 	sankey(data);	
 
@@ -66,10 +78,25 @@ function update(data) {
 	.attr("d", d3.sankeyLinkHorizontal())
 	.attr("stroke-width", function(d) { return Math.max(1, d.width); })
 	.on("mouseover", d=>{
-		console.log("source",d.source)
-		console.log("target",d.target)
-		// console.table(d.source.source.name,d.source.source.type, d.target.target.name,d.target.target.type)
+		let selectedSchool = d.source.school || d.target.school;
 	})
+	.on("mousedown", d=>{
+		
+		let selectedSchool = d.source.school || d.target.school;
+		
+		let data = JSON.parse(JSON.stringify(yearsCdsDict[currentYear]));
+		let nodes = data.nodes.filter(d=>d.school === selectedSchool || d.school == "Liceo" || d.name == "l");
+		let links = data.links.filter(d=>{
+			let a = findNodeById(d.source, nodes);
+			let b = findNodeById(d.target, nodes);
+			return a && b;
+		});
+		// remove nodes without links
+		nodes = nodes.filter(d=>{
+			return links.find(dd=>dd.source == d.id || dd.target == d.id);
+		});
+		update({nodes, links});
+	});
 
 	let node = svg.append("g")
 	.attr("class", "nodes")
@@ -94,4 +121,9 @@ function update(data) {
 	.attr("y", 10)
 	.text(d=>d.name)
 
+}
+
+function findNodeById(nodeId, array) {
+	let o = array.find(d=> d.id == nodeId);
+	return o;
 }
