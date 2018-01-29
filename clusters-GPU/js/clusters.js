@@ -169,7 +169,7 @@ function init() {
 			d.offset = Math.random();
 			d.randomWalk = 0;
 
-			d.oAlpha =.6;
+			d.oAlpha =.8;
 
 
 			container.addChild(d.sprite);
