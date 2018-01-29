@@ -1,42 +1,42 @@
 <html>
 
 <head>
-	<title>Poliscope – Who we are</title>
+	<title>Poliscope - Who we are</title>
 	<link rel="stylesheet" href="../common/style.css">
 </head>
 
 <body>
 
 	<div id="ui" style="visibility: hidden">
-
-		<h3>who we are</h3>
+		<p>Poliscope is looking at</p>
+		<h3 class="gnav">who we are</h3>
 		<div id="type" class="toggle">
-			<button name="studente">students</button>
-			<button name="professore">teachers</button>
+			<button name="studente" class="data">students</button>
+			<button name="professore" class="data">teachers</button>
 		</div>
-		<p>subdived by:</p>
+		<p>divided by</p>
 		<div id="dimensionsDrawers">
-			<select name="dimensionA" id="dimensionA">
+			<select name="dimensionA" id="dimensionA" class="cluster">
 				<option value="">+</option>
-				<option value="Livello">Undergraduate / Graduate</option>
+				<option value="Livello">Graduate</option>
 				<option value="Scuola">Schools</option>
 				<option value="Cittadinanza">Nationality</option>
 			</select>
 			<span>and</span>
 			<br/>
 			<br/>
-			<select name="dimensionB" id="dimensionB">
+			<select name="dimensionB" id="dimensionB" class="cluster">
 				<option value="">+</option>
-				<option value="Livello">Undergraduate / Graduate</option>
+				<option value="Livello">Graduate</option>
 				<option value="Scuola">Schools</option>
 				<option value="Cittadinanza">Nationality</option>
 			</select>
 		</div>
 		<div id="dimensionC" class="toggle">
-			<p>organized by:</p>
-			<button class="disabled" name="Genere">gender</button>
-			<button class="disabled" name="Anno di nascita">age</button>
-			<button class="disabled" name="Valutazione">evaluation</button>
+			<p>organized by</p>
+			<button class="disabled facet" name="Genere">gender</button>
+			<button class="disabled facet" name="Anno di nascita">age</button>
+			<button class="disabled facet" name="Valutazione">evaluation</button>
 		</div>
 
 
