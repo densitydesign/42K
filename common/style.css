@@ -11,6 +11,7 @@ html,body {
 	padding:0; 
 	margin:0; 
 	color:white;
+	cursor: default;
 	background-image: radial-gradient(ellipse farthest-corner at 80% bottom, #602397 0%, #020146 80%, #134173 100%);
 }
 
@@ -26,6 +27,11 @@ html,body {
 
 #ui button.disabled {
 	opacity:.5;
+}
+
+.title {
+	padding: 0px;
+	margin: 0px;
 }
 
 .toggle button {
@@ -60,19 +66,14 @@ html,body {
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#8843b8', endColorstr='#cd529f',GradientType=1 );
 }
 
-h3 {
-	font-size: 1.5em;
-}
-
-/*
 .gnav {
 	background: #090A31;
 	border: 1px solid #101469;
 	border-radius: 1px;
-	padding: 6px 12px;
+	padding: 6px 20px;
 	display: inline-block;
 	margin: none !important;
-}*/
+}
 
 .gnav:hover {
 	cursor:pointer;
