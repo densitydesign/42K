@@ -7,8 +7,8 @@ const FONTSIZE = 11;
 let gui;
 
 window.settings = new function() {
-	this.wander = 0.8;
-	this.speed = 1;
+	this.wander = 0.9;
+	this.speed = 0.5;
 }();
 
 window.onload = function() {
@@ -63,7 +63,7 @@ init();
 // -- ACCESSORS
 
 function loadData(callback) {
-	d3.tsv("assets/dati-studenti-professori.tsv", ( error, data)=>{
+	d3.tsv("assets/180130_studenti-2016-17.tsv", ( error, data)=>{
 		if(error) throw new Error(error.target.response);
 		callback(data);
 	});
@@ -141,7 +141,7 @@ function init() {
 		});
 
 		result
-		.forEach((d)=> d.Livello = d.Livello == "T" ? "Undergraduate" : "Graduate");
+		.forEach((d)=> d.Livello = d.Livello == "T" ? "Bachelor Degree" : "Master Degree");
 
 		const screenRadius = Math.sqrt(width*width + height*height) / 2;
 
@@ -310,7 +310,7 @@ function updateLayout(s) {
 
 
 	if(s.dimensionA !== null && s.dimensionB === null) {
-		window.settings.wander = 0.8;
+		window.settings.wander = 0.9;
 
 
 		pack = pack.size([width, height]).padding(height*0.1);
@@ -324,7 +324,7 @@ function updateLayout(s) {
 		})));
 
 	} else if(s.dimensionC === null && s.dimensionB !== null) {
-		window.settings.wander = 0.4;
+		window.settings.wander = 0.9;
 
 		let dataLabels = [];
 		const offsetX = width*.25;
@@ -381,7 +381,7 @@ function updateLayout(s) {
 
 	} else if(s.dimensionC !== null) {
 
-		window.settings.wander = 0.2;
+		window.settings.wander = 0.3;
 
 		console.log(s.dimensionC)
 		switch(s.dimensionC) {
@@ -408,7 +408,7 @@ function updateLayout(s) {
 	}
 
 	function histogram() {
-		window.settings.wander = 0.0;
+		window.settings.wander = 0.3;
 
 		let axisData = [];
 		let allClusters = [];
