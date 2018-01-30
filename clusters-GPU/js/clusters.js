@@ -1,6 +1,6 @@
 /* jslint esversion:6, unused:true */
 
-const FONTSIZE = 11;
+const FONTSIZE = 9;
 
 
 // -- GUI
@@ -8,7 +8,7 @@ let gui;
 
 window.settings = new function() {
 	this.wander = 0.9;
-	this.speed = 0.5;
+	this.speed = 0;
 }();
 
 window.onload = function() {
@@ -444,6 +444,8 @@ function updateLayout(s) {
 			y2: axisY
 		});
 
+		console.log(xss.range())
+
 		labelsData.push({
 			text:ae[0] +" ",
 			labelLeftAligned: true,
@@ -455,7 +457,7 @@ function updateLayout(s) {
 		labelsData.push({
 			text:ae[1] +" ",
 			labelLeftAligned: true,
-			rotation: 10,
+			rotation: 0,
 			y: axisY,
 			x: xss.range()[1] * 1.005
 		});
@@ -715,7 +717,7 @@ function updateLayout(s) {
 			let fontWeight = d.first ? 'bold' : 'normal';
 			const textcolor = "white";
 			const textValue = d.first ? d.text.toUpperCase() : toTitleCase(d.text.toLowerCase());
-			const text = new PIXI.Text(textValue, {fontFamily : 'Calibre', fontWeight: fontWeight, fontSize: FONTSIZE, fill : textcolor});
+			const text = new PIXI.Text(textValue, {fontFamily : '-apple-system, system-ui', fontWeight: fontWeight, fontSize: FONTSIZE, fill : textcolor});
 			const cont = new PIXI.Sprite();
 			const tw = text.width;
 			const th = text.height;

@@ -62,7 +62,7 @@ html,body {
 	z-index:1; 
 	padding: 1rem 1.5rem;
 	width:20vw;
-	top:15vh;
+	top:20vh;
 }
 
 #ui button.disabled {
