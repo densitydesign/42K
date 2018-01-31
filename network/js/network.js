@@ -163,7 +163,7 @@ d3.json("data/171110_progetti-didattica.json", function(error, g) {
 			// .attr("xlink:href", "glow.png")
 			// .attr("width", d=>d.radius)
 			el.append("circle")
-			.style("fill", "rgba(254,226,144,0.5)")
+			.style("fill", "rgba(254,226,144,0.23)")
 			.attr("r", d=>d.radius*0.5)
 			// .style("transform", d=>{
 			// 	let w = -fundScale(d.finanziamento)*.5;
@@ -312,7 +312,7 @@ function update() {
 			.style("opacity", 1);
 
 			
-		}, 500);
+		}, 700);
 
 	} else {
 

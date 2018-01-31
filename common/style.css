@@ -74,7 +74,7 @@ html,body {
 	margin: 0px;
 }
 
-.toggle button {
+button {
 	color: white;
 	text-transform: uppercase;
 	border-radius: 2px;
@@ -83,7 +83,7 @@ html,body {
 	transition: 0.3s ease;
 }
 
-.toggle button:hover {
+button:hover {
 	opacity: 0.8 !important;
 	cursor: pointer;
 }

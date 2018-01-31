@@ -7,8 +7,8 @@ const FONTSIZE = 9;
 let gui;
 
 window.settings = new function() {
-	this.wander = 0.9;
-	this.speed = 0;
+	this.wander = 0.3;
+	this.speed = 1;
 }();
 
 window.onload = function() {
@@ -141,7 +141,7 @@ function init() {
 		});
 
 		result
-		.forEach((d)=> d.Livello = d.Livello == "T" ? "Bachelor Degree" : "Master Degree");
+		.forEach((d)=> d.Livello = d.Livello == "T" ? "Bachelor" : "Master");
 
 		const screenRadius = Math.sqrt(width*width + height*height) / 2;
 
@@ -408,7 +408,7 @@ function updateLayout(s) {
 	}
 
 	function histogram() {
-		window.settings.wander = 0.3;
+		window.settings.wander = 0.1;
 
 		let axisData = [];
 		let allClusters = [];
@@ -558,7 +558,7 @@ function updateLayout(s) {
 						if(c<s.data.length) {	
 							s.data[c].tx = ix  + (row >0 ? 1 : -1) *interval*.08;
 							s.data[c].ty = voteScale(+third.key);
-							s.data[c].sprite.tint = row >0 ? 0xff0000 : 0xffffff; 
+							s.data[c].sprite.tint = row >0 ? 0xffffff : 0xffffff; 
 							c++;
 						}
 					});
@@ -601,13 +601,13 @@ function updateLayout(s) {
 			let labelX = xs(0) * .92;
 
 			labelsData.push({
-				text:"M",
+				text:"Male",
 				x: labelX,
 				y: iy -10 
 			});
 
 			labelsData.push({
-				text:"F",
+				text:"Female",
 				x: labelX,
 				y: iy + 10
 			});
