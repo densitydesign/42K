@@ -4,7 +4,7 @@ const d3 = require('d3');
 const fs = require('fs');
 
 
-let name = "170725_studenti-inizio-2011";
+let name = "2011-1";
 // let name = "171115_studenti-inizio-2012";
 
 fs.readFile("csv/"+name+".csv", "utf8", function(error, data) {
