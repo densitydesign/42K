@@ -78,28 +78,36 @@ function update(originalData) {
 
 	// quickly clone object
 	let data = JSON.parse(JSON.stringify(originalData));
-	svg.selectAll("*").remove()
+	console.log('puzzi')
+	svg.selectAll("*").transition().duration(300).style('opacity',1e-6).remove()
 	sankey(data);	
 
 	var link = svg.append("g")
 	.attr("class", "links")
 	.selectAll("path")
-	.data(data.links)
-	.enter()
+	.data(data.links);
+	
+	link = link.enter()
 	.append("path")
 	.attr("class", "link")
-	.attr("d", d3.sankeyLinkHorizontal())
-	.attr("stroke", d=>{
-		return d.source.school ? color(d.source.school) : "white"
-	})
-	.attr("stroke-width", function(d) { return Math.max(1, d.width); })
+	.merge(link)
 	.on("mouseover", d=>{
 		console.log(d.source,d.target)
 	})
 	.on("mousedown", d=>{
 		let selectedSchool = d.source.school || d.target.school;
 		showPath(selectedSchool);
-	});
+	})
+	
+	link.transition()
+	.duration(500)
+	.delay(200)
+	.ease(d3.easePolyInOut)
+	.attr("d", d3.sankeyLinkHorizontal())
+	.attr("stroke", d=>{
+		return d.source.school ? color(d.source.school) : "white"
+	})
+	.attr("stroke-width", function(d) { return Math.max(1, d.width); });
 
 	let node = svg.append("g")
 	.attr("class", "nodes")
@@ -109,23 +117,32 @@ function update(originalData) {
 	.data(data.nodes)
 	.enter()
 	.append("g")
+	// .merge(node)
 	.attr("transform", d=>"translate("+d.x0 + " "+d.y0+")")
 
-	node
+	let nodeRect = node
 	.append("rect")
 	.attr("fill", d=>{
 		if(d.name=== "attiva triennale" || d.name=== "disattivata triennale"  || d.name=== "attiva magistrale" || d.name=== "disattivata magistrale" || d.name === "s") return "#ddd"
 		return d.school ? color(d.school) : "white"
 	})
+	.transition()
+	.duration(300)
+	.ease(d3.easePolyInOut)
 	.attr("height", function(d) { return d.y1 - d.y0; })
 	.attr("width", function(d) { return d.x1 - d.x0; })
 
-	node
+	let nodeText = node
 	.append("text")
 	.attr("class", "nodeLabel")
 	.attr("x", 10)
 	.attr("y", 10)
+	.style('opacity', 1e-6)
 	.text(d=>d.name)
+	.transition()
+	.duration(500)
+	.delay(600)
+	.style('opacity', 1)
 
 }
 
