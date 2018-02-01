@@ -63,8 +63,12 @@ init();
 // -- ACCESSORS
 
 function loadData(callback) {
-	d3.tsv("assets/dati-studenti-professori.tsv", ( error, data)=>{
-		if(error) throw new Error(error.target.response);
+	let file = "assets/180130_studenti-2016-17.tsv"; 
+	d3.tsv(file, ( error, data)=>{
+		if(error) {
+			throw new Error(error.target.response);
+			alert(`${file} non trovato!`);
+		}
 		callback(data);
 	});
 }
