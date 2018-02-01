@@ -318,9 +318,10 @@ function updateLayout(s) {
 
 		positionNodesInCircles();
 		updateLabels(clustersInfo.map(d=>({
+			first:true,
 			text: d.data.key,
 			x: d.x,
-			y: d.y,
+			y: d.y + d.r  + FONTSIZE *.5,
 		})));
 
 	} else if(s.dimensionC === null && s.dimensionB !== null) {
@@ -334,7 +335,6 @@ function updateLayout(s) {
 			size *= 1.2;
 			offsetY = size * .1;
 		}
-
 		// pack each cluster
 		pack = pack.padding(d=>{
 			return d.depth == 1 ? 10 : d.depth == 0 ? 0 : 40
@@ -387,15 +387,15 @@ function updateLayout(s) {
 		switch(s.dimensionC) {
 
 			case "Genere":
-			butterflyChart();
+			genderChart();
 			break;
 
 			case "Anno di nascita":
-			histogram();
+			birthChart();
 			break;
 
 			case "Valutazione":
-			matrix();
+			valuationChart();
 			break;
 
 		}
@@ -407,7 +407,7 @@ function updateLayout(s) {
 		return;
 	}
 
-	function histogram() {
+	function birthChart() {
 		window.settings.wander = 0.0;
 
 		let axisData = [];
@@ -501,28 +501,75 @@ function updateLayout(s) {
 	}
 
 
-	function matrix() {
+	function valuationChart() {
 
-		// const columnWidth = width *.1;
 
-		let mnc = d3.max(s.nestedData, d=>d.values.length);
+		const x0 = d3.scaleBand()
+		.rangeRound([width*0.25, width*0.9])
+		.paddingInner(0.1)
+		.domain(s.nestedData.map(d=>d.key));
 
-		// const xs = d3.scaleLinear().domain([0, s.nestedData.length-1]).range([(height - graphheight)*.5, (height + graphheight) *.5 ]);
-		const xs = d3.scaleLinear().domain([0, mnc-1]).range([width*.25, width*.9]);
-		const voteScale = d3.scaleLinear().domain([0,110]).range([height*.8, height*.2]);
-		const interval = xs(1)-xs(0);
+		// find all the unique keys for the second dimension
+		let keys = [];
+		s.nestedData.forEach(d=>d.values.forEach(dd=>{if(keys.indexOf(dd.key)==-1) keys.push(dd.key)}));
 
-		// calculate max values dictionary for each evaluation
+		const x1 = d3.scaleBand()
+		.domain(keys)
+		.rangeRound([0, x0.bandwidth()])
+		.padding(0.05);
+
+
+		const voteScale = d3.scaleLinear()
+		.domain([0,110])
+		.range([height*0.8, height*0.2]);
+
+		let c = 0; 
+		let labelsData = [];
+
+		s.nestedData.forEach( (first, column) =>{
+			
+
+			labelsData.push({
+				first:true,
+				text:first.key,
+				labelLeftAligned: false,
+				y: voteScale.range()[0]*1.1, 
+				x: x0(first.key) +  x0.bandwidth()/2
+			});
+
+			first.values.forEach((second, column2)=>{
+				
+				let ix = x0(first.key) + x1(second.key);
+
+				labelsData.push({
+					text:second.key,
+					labelLeftAligned: false,
+					y: voteScale.range()[0]*1.05, 
+					x: ix
+				});
+				second.values.forEach((third,i)=>{
+
+					d3.range(third.value).forEach((n, i)=>{
+						if(c<s.data.length) {	
+							s.data[c].tx = ix
+							s.data[c].ty =voteScale(+third.key);
+							c++;
+						}
+					});
+				});
+			});
+		});
+
 
 		let axisLabelsData = voteScale.ticks(5);
 		axisLabelsData.push(110);
 		axisLabelsData = axisLabelsData.map(d=>({
-			x: xs.range()[0]*.85,
+			x: x0.range()[0]*0.85,
 			y: voteScale(d),
 			text: d + " ",
 		}));
 
-		let axisX = xs.range()[0]*.88;
+		let axisX = x0.range()[0]*0.88;
 		const axisData = [{
 			x1: axisX,
 			y1: voteScale.range()[1],
@@ -531,45 +578,11 @@ function updateLayout(s) {
 		}];
 
 		updateAxes(axisData);
-
-		let c = 0; 
-		let labelsData = [];
-
-		s.nestedData.forEach( (first,row) =>{
-
-			first.values.forEach((second, srow)=>{
-
-				let ix = xs(srow);
-
-				if(row > 0) {
-					labelsData.push({
-						text:second.key,
-						labelLeftAligned: false,
-						y: voteScale.range()[0]*1.05, 
-						x: ix
-					});
-				}
-
-
-				second.values.forEach((third,i)=>{
-					d3.range(third.value).forEach((n, i)=>{
-						if(c<s.data.length) {	
-							s.data[c].tx = ix  + (row >0 ? 1 : -1) *interval*.08;
-							s.data[c].ty = voteScale(+third.key);
-							s.data[c].sprite.tint = row >0 ? 0xff0000 : 0xffffff; 
-							c++;
-						}
-					});
-				});
-			});
-		});
-
 		updateLabels(labelsData.concat(axisLabelsData));
-
 
 	}
 
-	function butterflyChart() {
+	function genderChart() {
 
 		// max value in all records
 		let mv = d3.max(s.nestedData, (d)=>d3.max(d.values, (d)=>d3.max(d.values, (d)=>d.value)));
