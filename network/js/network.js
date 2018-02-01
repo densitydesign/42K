@@ -158,7 +158,7 @@ d3.json("data/171110_progetti-didattica.json", function(error, g) {
 		if(d.type == "uni") {
 			el.append("circle").attr("r", 1).style("fill", "#FFFFFF");
 		}else {
-			el.append("rect").attr("width", 5).attr("height", 5).style("fill", "#F4CF78").attr("transform", "rotate(45) translate(-2 -2)"); 
+			el.append("rect").attr("width", 5).attr("height", 5).style("fill", "#F4CF78").attr("transform", "rotate(45) translate(-1 -1)"); 
 			// el.append("image")
 			// .attr("xlink:href", "glow.png")
 			// .attr("width", d=>d.radius)
