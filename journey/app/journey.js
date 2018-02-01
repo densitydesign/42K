@@ -3,12 +3,13 @@
 const color = d3.scaleOrdinal(["#2686FC", "#B226E4", "#F28739", "#F01F74"]).domain(["des","arc - urb - cost","ing ind - inf","ing - civ"]);
 
 let width = document.body.clientWidth;
-let height = document.body.clientHeight;
+let height = document.body.clientHeight-200;
 
 var svg = d3.select("body")
 .append("svg")
 .attr("width",width)
-.attr("height",height);
+.attr("height",height)
+.attr("align","center");
 
 let sankey = d3.sankey()
 .nodeWidth(4)
@@ -111,8 +112,8 @@ function update(originalData) {
 
 	let node = svg.append("g")
 	.attr("class", "nodes")
-	.attr("font-family", "sans-serif")
-	.attr("font-size", 10)
+	.attr("font-family", "-apple-system, system-ui")
+	.attr("font-size", 9)
 	.selectAll("g")
 	.data(data.nodes)
 	.enter()
