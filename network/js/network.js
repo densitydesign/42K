@@ -158,12 +158,12 @@ d3.json("data/171110_progetti-didattica.json", function(error, g) {
 		if(d.type == "uni") {
 			el.append("circle").attr("r", 1).style("fill", "#FFFFFF");
 		}else {
-			el.append("rect").attr("width", 4).attr("height", 4).style("fill", "#FEE290").attr("transform", "rotate(45) translate(-2 -2)"); 
+			el.append("rect").attr("width", 5).attr("height", 5).style("fill", "#F4CF78").attr("transform", "rotate(45) translate(-2 -2)"); 
 			// el.append("image")
 			// .attr("xlink:href", "glow.png")
 			// .attr("width", d=>d.radius)
 			el.append("circle")
-			.style("fill", "rgba(254,226,144,0.23)")
+			.style("fill", "rgba(244,207,120,0.23)")
 			.attr("r", d=>d.radius*0.5)
 			// .style("transform", d=>{
 			// 	let w = -fundScale(d.finanziamento)*.5;
@@ -201,17 +201,17 @@ d3.json("data/171110_progetti-didattica.json", function(error, g) {
 	.attr("x", d=>yearScale(d))
 	.attr("y", participantsScale.range()[1]*1.02)
 
-	container
-	.selectAll(".projectName")
-	.data(graph.nodes.filter(d=>d.type=="project"))
-	.enter()
-	.append("text")
-	.style("pointer-events", "none")
-	.attr("class", "projectName")
-	.text(d=>d.label)
-	.attr("x", d=>yearScale(d.startDate) + 10)
-	.attr("y", d=>participantsScale(d.participants))
-	.style("opacity", 0);
+	// container
+	// .selectAll(".projectName")
+	// .data(graph.nodes.filter(d=>d.type=="project"))
+	// .enter()
+	// .append("text")
+	// .style("pointer-events", "none")
+	// .attr("class", "projectName")
+	// .text(d=>d.label)
+	// .attr("x", d=>yearScale(d.startDate) + 10)
+	// .attr("y", d=>participantsScale(d.participants))
+	// .style("opacity", 0);
 
 
 
