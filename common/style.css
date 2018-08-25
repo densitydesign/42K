@@ -1,0 +1,26 @@
+/* --- ROOT ---  */
+
+html,body {
+	width:100%; 
+	height:100%; 
+	padding:0; 
+	margin:0; 
+	font-family: sans-serif;color:white;
+	background-image: radial-gradient(ellipse farthest-corner at 80% bottom, #602397 0%, #020146 80%, #134173 100%);
+}
+
+/* --- UI ---  */
+
+#ui {
+	position: absolute; 
+	z-index:1; 
+	padding: 1rem 1.5rem;
+	width:20vw;
+	top:20vh;
+}
+
+#ui button.disabled {
+	opacity:.5;
+}
+
+/* ---  ---  */

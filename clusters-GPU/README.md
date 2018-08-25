@@ -1,6 +1,9 @@
-## Poliscope – Who we are
+## Poliscope – Who we are (GPU test)
 
-## Usage
+##Install
+Nothing to install (yet) :)
+
+##Usage
 Start a webserver inside the root folder. For example:
 
     python -m http.server
